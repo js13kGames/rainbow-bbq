@@ -1,0 +1,12 @@
+.{
+    .name = .ooba_engine2,
+    .version = "0.0.0",
+    .fingerprint = 0xe46bc1dc703cce1c,
+    .minimum_zig_version = "0.17.0-dev.1936+5a625d5f3",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

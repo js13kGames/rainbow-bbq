@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build debug",
+            "command": "zig",
+            "args": ["build"],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": "$zig"
+        },
+        {
+            "label": "build release (small)",
+            "command": "zig",
+            "args": ["build", "-Doptimize=ReleaseSmall"],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": "$zig"
+        },
+        {
+            "label": "build release (fast)",
+            "command": "zig",
+            "args": ["build", "-Doptimize=ReleaseFast"],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": "$zig"
+        }
+    ]
+}
