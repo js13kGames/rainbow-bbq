@@ -237,8 +237,10 @@ pub fn main(init: std.process.Init) !void {
 
     // Render output image
     std.debug.assert(atlas_w % 8 == 0);
+    const atlas_buffer = try arena.alloc(u8, atlas_w * atlas_h / 8);
+    @memset(atlas_buffer, 0);
     const atlas = BitAtlas{
-        .buffer = try arena.alloc(u8, atlas_w * atlas_h / 8),
+        .buffer = atlas_buffer,
         .w = atlas_w,
         .h = atlas_h,
     };
