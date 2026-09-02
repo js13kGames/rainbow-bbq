@@ -231,10 +231,6 @@ pub fn decompress(in: []const u8, out: []u8) !void {
             .repeat_string => {
                 const start: usize = d.getU16();
                 const length: usize = Command.repeat_string.lengthOffset() + packet.length;
-                if (d.out_pos + length > out.len) @panic("bad length");
-                if (start + length > d.out.len) @panic("bad end thing");
-                if (start + length > d.out_pos) std.debug.panic("overlap @ {}", .{d.in_pos - 3});
-
                 @memcpy(
                     d.out[d.out_pos .. d.out_pos + length],
                     d.out[start .. start + length],
