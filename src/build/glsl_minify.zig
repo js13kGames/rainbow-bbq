@@ -1,14 +1,12 @@
-//! Opinionated JS minifier.
-//! It imposes some restrictions on the input JS code:
-//! * Semicolons are required, always
-//! * No use of the `arguments` keyword
-//!
+//! Opinionated GLSL ES 3.0 minifier.
+//! It imposes some restrictions on the input code:
+//! * Only a subset of the language is implemented, very WIP.
+//! * Assumes names of variables, attributes and varyings can be mangled
 
 const std = @import("std");
 
 const tokenizer = @import("glsl/tokenizer.zig");
 const parser = @import("glsl/parser.zig");
-const optimizer = @import("glsl/optimize.zig");
 const printer = @import("glsl/printer.zig");
 const ast = @import("glsl/ast.zig");
 const debug_printer = @import("ast_printer.zig").For(ast);
@@ -55,9 +53,6 @@ pub fn minify(src: []const u8, w: *std.Io.Writer, options: MinifyArgs) !void {
 
     const tokens = try tokenizer.tokenize(arena, &options);
     const nodes = try parser.parse(tokens, arena, &options);
-    // try optimizer.optimize(nodes, arena, &options);
-
-    // try debug_printer.print(nodes, w, src);
 
     // Print AST, because I got nothin better to do
     try printer.print(nodes, w, src);
