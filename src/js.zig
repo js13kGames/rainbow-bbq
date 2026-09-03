@@ -58,8 +58,19 @@ export fn k(key: usize, pressed: bool) void {
     input.keys[key].next = pressed;
 }
 
+export fn m(dx: f32, dy: f32) void {
+    input.mouse_nx += dx;
+    input.mouse_ny += dy;
+}
+
 pub const input = struct {
-    var keys: [256]DigitalState = undefined;
+    pub var keys: [256]DigitalState = undefined;
+
+    pub var mouse_x: f32 = 0;
+    pub var mouse_y: f32 = 0;
+
+    var mouse_nx: f32 = 0;
+    var mouse_ny: f32 = 0;
 
     pub const DigitalState = packed struct(u8) {
         previous: bool = false,
@@ -80,18 +91,20 @@ pub const input = struct {
         }
 
         pub fn update(key: DigitalState) DigitalState {
-            const as_int: u8 = @bitCast(key);
-            return @bitCast(as_int >> 1);
-
-            // Essentually the same as this, but the output is smaller
-            // var out = key;
-            // out.previous = key.current;
-            // out.current = key.next;
-            // return out;
+            var out = key;
+            out.previous = key.current;
+            out.current = key.next;
+            return out;
         }
     };
 
     pub fn update() void {
+        mouse_x += mouse_nx;
+        mouse_nx = 0;
+
+        mouse_y += mouse_ny;
+        mouse_ny = 0;
+
         for (&keys, 0..) |key, i| {
             keys[i] = key.update();
         }

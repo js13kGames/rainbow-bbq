@@ -1,10 +1,12 @@
 const std = @import("std");
 
-pub const Matrix = struct {
-    const Row = @Vector(4, f32);
+const js = @import("js.zig");
 
-    /// Each row can be bit-cast to @Vector(4, f32) for SIMD purposes
-    m: [4][4]f32 = .{
+const Vec4 = @Vector(4, f32);
+const Vec3 = @Vector(3, f32);
+
+pub const Matrix = struct {
+    m: [4]Vec4 = .{
         .{ 1, 0, 0, 0 },
         .{ 0, 1, 0, 0 },
         .{ 0, 0, 1, 0 },
@@ -18,13 +20,11 @@ pub const Matrix = struct {
 
         var out: Matrix = undefined;
         for (a.m, 0..) |m, i| {
-            out.m[i] = @as(
-                [4]f32,
-                @as(Row, @splat(m[0])) * @as(Row, temp[0]) +
-                    @as(Row, @splat(m[1])) * @as(Row, temp[1]) +
-                    @as(Row, @splat(m[2])) * @as(Row, temp[2]) +
-                    @as(Row, @splat(m[3])) * @as(Row, temp[3]),
-            );
+            out.m[i] =
+                @as(Vec4, @splat(m[0])) * temp[0] +
+                @as(Vec4, @splat(m[1])) * temp[1] +
+                @as(Vec4, @splat(m[2])) * temp[2] +
+                @as(Vec4, @splat(m[3])) * temp[3];
         }
 
         dest.* = out;
@@ -32,20 +32,18 @@ pub const Matrix = struct {
 
     /// Translates a matrix in place
     pub fn translate(this: *Matrix, x: f32, y: f32, z: f32) void {
-        this.m[3] = @as(
-            [4]f32,
-            @as(Row, this.m[0]) * @as(Row, @splat(x)) +
-                @as(Row, this.m[1]) * @as(Row, @splat(y)) +
-                @as(Row, this.m[2]) * @as(Row, @splat(z)) +
-                @as(Row, this.m[3]),
-        );
+        this.m[3] =
+            this.m[0] * @as(Vec4, @splat(x)) +
+            this.m[1] * @as(Vec4, @splat(y)) +
+            this.m[2] * @as(Vec4, @splat(z)) +
+            this.m[3];
     }
 
     /// Scales a matrix in place
     pub fn scale(this: *Matrix, x: f32, y: f32, z: f32) void {
-        this.m[0] = @as([4]f32, @as(Row, this.m[0]) * @as(Row, @splat(x)));
-        this.m[1] = @as([4]f32, @as(Row, this.m[1]) * @as(Row, @splat(y)));
-        this.m[2] = @as([4]f32, @as(Row, this.m[2]) * @as(Row, @splat(z)));
+        this.m[0] = this.m[0] * @as(Vec4, @splat(x));
+        this.m[1] = this.m[1] * @as(Vec4, @splat(y));
+        this.m[2] = this.m[2] * @as(Vec4, @splat(z));
     }
 
     /// Create a new matrix from a translation
@@ -159,37 +157,117 @@ pub const Matrix = struct {
     pub fn orthoWebGPU(left: f32, right: f32, bottom: f32, top: f32, z_near: f32, z_far: f32) Matrix {
         return ortho(0, left, right, bottom, top, z_near, z_far);
     }
+
+    pub fn lookAt(eye: Vector, target: Vector, up: Vector) Matrix {
+        const axis_z = eye.sub3(target).normalize3();
+        const axis_x = up.cross(axis_z).normalize3();
+        const axis_y = axis_z.cross(axis_x).normalize3();
+
+        return .{ .m = .{
+            .{ axis_x.v[0], axis_y.v[0], axis_z.v[0], 0 },
+            .{ axis_x.v[1], axis_y.v[1], axis_z.v[1], 0 },
+            .{ axis_x.v[2], axis_y.v[2], axis_z.v[2], 0 },
+            .{ -(axis_x.dot3(eye)), -(axis_y.dot3(eye)), -(axis_z.dot3(eye)), 1 },
+        } };
+    }
 };
 
 pub const Vector = struct {
-    const Vec = @Vector(4, f32);
+    v: Vec4 = .{ 0, 0, 0, 1 },
 
-    v: [4]f32 = .{ 0, 0, 0, 1 },
+    pub fn init(x: f32, y: f32, z: f32) Vector {
+        return .{ .v = .{ x, y, z, 1 } };
+    }
+
+    pub inline fn to3(this: Vector) Vec3 {
+        return .{ this.v[0], this.v[1], this.v[2] };
+    }
 
     /// Multiply by a matrix as a 3D vector.
     /// Assumes the w component of the vector is 1.0.
     pub fn transform3(this: Vector, mtx: *const Matrix) Vector {
-        const x = @as(Vec, @splat(this.v[0]));
-        const y = @as(Vec, @splat(this.v[1]));
-        const z = @as(Vec, @splat(this.v[2]));
-        const w = @as(Vec, @splat(this.v[3]));
+        const x: Vec4 = @splat(this.v[0]);
+        const y: Vec4 = @splat(this.v[1]);
+        const z: Vec4 = @splat(this.v[2]);
+        const w: Vec4 = @splat(this.v[3]);
 
-        return .{ .v = @as(
-            [4]f32,
-            (@as(Vec, mtx.m[0]) * x + @as(Vec, mtx.m[1]) * y + @as(Vec, mtx.m[2]) * z + @as(Vec, mtx.m[3])) / w,
-        ) };
+        return .{ .v = (mtx.m[0] * x + mtx.m[1] * y + mtx.m[2] * z + mtx.m[3]) / w };
     }
 
     /// Multiply by a Matrix as a 4D vector
     pub fn transform4(this: Vector, mtx: *const Matrix) Vector {
-        const x = @as(Vec, @splat(this.v[0]));
-        const y = @as(Vec, @splat(this.v[1]));
-        const z = @as(Vec, @splat(this.v[2]));
-        const w = @as(Vec, @splat(this.v[3]));
+        const x: Vec4 = @splat(this.v[0]);
+        const y: Vec4 = @splat(this.v[1]);
+        const z: Vec4 = @splat(this.v[2]);
+        const w: Vec4 = @splat(this.v[3]);
 
-        return .{ .v = @as(
-            [4]f32,
-            @as(Vec, mtx.m[0]) * x + @as(Vec, mtx.m[1]) * y + @as(Vec, mtx.m[2]) * z + @as(Vec, mtx.m[3]) * w,
-        ) };
+        return .{ .v = mtx.m[0] * x + mtx.m[1] * y + mtx.m[2] * z + mtx.m[3] * w };
+    }
+
+    pub fn normalize3(this: Vector) Vector {
+        const sqr = this.v * this.v;
+        const len_sqr = sqr[0] + sqr[1] + sqr[2];
+        const len_inv: f32 = 1.0 / @sqrt(len_sqr);
+        var res = this.v * @as(Vec4, @splat(len_inv));
+        res[3] = 1;
+        return .{ .v = res };
+    }
+
+    pub fn add3(this: Vector, other: Vector) Vector {
+        var r = this.v + other.v;
+        r[3] = 1;
+        return .{ .v = r };
+    }
+
+    pub fn add4(this: Vector, other: Vector) Vector {
+        return .{ .v = this.v + other.v };
+    }
+
+    pub fn sub3(this: Vector, other: Vector) Vector {
+        var r = this.v - other.v;
+        r[3] = 1;
+        return .{ .v = r };
+    }
+
+    pub fn sub4(this: Vector, other: Vector) Vector {
+        return .{ .v = this.v - other.v };
+    }
+
+    pub fn rotateX(this: Vector, rad: f32) Vector {
+        return .init(
+            this.v[0],
+            this.v[1] * js.cos(rad) - this.v[2] * js.sin(rad),
+            this.v[1] * js.sin(rad) + this.v[2] * js.cos(rad),
+        );
+    }
+
+    pub fn rotateY(this: Vector, rad: f32) Vector {
+        return .init(
+            this.v[2] * js.sin(rad) + this.v[0] * js.cos(rad),
+            this.v[1],
+            this.v[2] * js.cos(rad) - this.v[0] * js.sin(rad),
+        );
+    }
+
+    pub fn rotateZ(this: Vector, rad: f32) Vector {
+        return .init(
+            this.v[0] * js.cos(rad) - this.v[1] * js.sin(rad),
+            this.v[0] * js.sin(rad) + this.v[1] * js.cos(rad),
+            this.v[2],
+        );
+    }
+
+    pub fn dot3(this: Vector, other: Vector) f32 {
+        const r = this.v * other.v;
+        return r[0] + r[1] + r[2];
+    }
+
+    pub fn cross(this: Vector, other: Vector) Vector {
+        const tmp0: Vec4 = .{ this.v[1], this.v[2], this.v[0], 1 };
+        const tmp1: Vec4 = .{ other.v[2], other.v[0], other.v[1], 1 };
+        const tmp2: Vec4 = .{ this.v[2], this.v[0], this.v[1], 1 };
+        const tmp3: Vec4 = .{ other.v[1], other.v[2], other.v[0], 1 };
+
+        return .{ .v = (tmp0 * tmp1) - (tmp2 * tmp3) };
     }
 };

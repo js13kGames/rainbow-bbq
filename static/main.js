@@ -5,6 +5,7 @@
     });
     if (!gl) throw new Error("WebGL2 not available");
 
+    gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(
         gl.SRC_ALPHA,
@@ -89,6 +90,12 @@
     addEventListener("keyup", (event) => {
         instance.exports.k(event.keyCode, false);
     });
+
+    onmousemove = (event) => {
+        if (event.buttons) {
+            instance.exports.m(event.movementX, event.movementY);
+        }
+    };
 
     // Run once per frame
     instance.exports.a();
