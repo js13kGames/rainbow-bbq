@@ -2,13 +2,32 @@ const std = @import("std");
 
 pub const Token = @import("tokenizer.zig").Token;
 
+pub const Text = union(enum) {
+    src: Token,
+    custom: []const u8,
+
+    /// The returned string is either from the src array, or a const string.
+    /// No need to free it.
+    pub fn toString(this: Text, src: []const u8) []const u8 {
+        return switch (this) {
+            .src => |token| token.toString(src),
+            .custom => |str| str,
+        };
+    }
+};
+
+pub const Number = union(enum) {
+    src: Token,
+    custom: f64,
+};
+
 pub const Type = struct {
     precision: ?Token.Kind,
-    name: Token,
+    name: Text,
 };
 
 pub const TopDecl = union(enum) {
-    directive: Token,
+    directive: Text,
     function: Function,
     var_decl: VarDecl,
     precision: PrecisionSpec,
@@ -16,41 +35,36 @@ pub const TopDecl = union(enum) {
 
 pub const PrecisionSpec = struct {
     precision: Token.Kind,
-    name: Token,
+    name: Text,
 };
 
 pub const Function = struct {
     return_type: Type,
-    name: Token,
+    name: Text,
     parameters: []Parameter,
     body: BlockStmnt,
 
     pub const Parameter = struct {
         direction: Token.Kind = .in,
         type: Type,
-        name: Token,
+        name: Text,
         array_members: []Expression,
     };
 };
 
 pub const VarDecl = struct {
-    location: ?Token,
+    location: ?Number,
     interpolation_qualifier: ?Token.Kind,
     storage_qualifier: ?Token.Kind,
     type: Type,
-    name: Token,
+    name: Text,
     array_members: []Expression,
     value: ?*Expression,
 };
 
 pub const Expression = union(enum) {
-    // These ones are injected in the optimization step
-    number_custom: f64,
-    identifier_custom: []const u8,
-
-    // These ones are all read from the source files
-    number: Token,
-    identifier: Token,
+    number: Number,
+    identifier: Text,
     dot: DotExpr,
     call: CallExpr,
     unary: UnaryExpr,
@@ -123,13 +137,11 @@ pub const CallExpr = struct {
 
 pub const DotExpr = struct {
     subject: *Expression,
-    field: Token,
+    field: Text,
 };
 
 pub const Statement = union(enum) {
-    directive: Token,
-    directive_custom: []const u8,
-
+    directive: Text,
     block: BlockStmnt,
     expression: Expression,
     @"if": IfStmnt,

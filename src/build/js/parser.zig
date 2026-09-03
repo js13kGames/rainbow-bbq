@@ -99,9 +99,9 @@ const Parser = struct {
         var node: ast.Expression = switch (this.peekToken().?.kind) {
             .paren_open => try this.parseParensExpr(),
             .async => try this.parseArrowFn(),
-            .identifier => .{ .identifier = this.nextTokenExpect(.identifier) },
-            .string => .{ .string = this.nextTokenExpect(.string) },
-            .number => .{ .number = this.nextTokenExpect(.number) },
+            .identifier => .{ .identifier = .{ .src = this.nextTokenExpect(.identifier) } },
+            .string => .{ .string = .{ .src = this.nextTokenExpect(.string) } },
+            .number => .{ .number = .{ .src = this.nextTokenExpect(.number) } },
             .not, .neg, .minus, .await, .plus, .new, .increment, .decrement => try this.parseExprUnary(),
             .curly_open => try this.parseExprObject(),
             .square_open => try this.parseExprArray(),
@@ -203,9 +203,9 @@ const Parser = struct {
 
             const next = this.nextToken().?;
             const key: ast.ObjectLiteral.Key = switch (next.kind) {
-                .string => .{ .string = next },
-                .number => .{ .number = next },
-                .identifier => .{ .identifier = next },
+                .string => .{ .string = .{ .src = next } },
+                .number => .{ .number = .{ .src = next } },
+                .identifier => .{ .identifier = .{ .src = next } },
                 .square_open => blk: {
                     const expr = try this.parseExpression();
                     this.nextExpect(.square_close);
@@ -280,7 +280,7 @@ const Parser = struct {
             }
 
             catch_block = .{
-                .capture = capture,
+                .capture = if (capture) |c| .{ .src = c } else null,
                 .block = (try this.parseStmntBlock()).block,
             };
         }
@@ -349,7 +349,7 @@ const Parser = struct {
             .dot = .{
                 .subject = try this.allocNode(previous),
                 .dot_type = access_type,
-                .field = field_name,
+                .field = .{ .src = field_name },
             },
         };
     }
@@ -370,7 +370,7 @@ const Parser = struct {
         this.nextExpect(.semicolon);
         return .{ .@"var" = .{
             .decl_type = decl_type,
-            .name = name,
+            .name = .{ .src = name },
             .value = default_value,
         } };
     }
@@ -458,7 +458,7 @@ const Parser = struct {
             }
 
             try args.append(this.gpa, .{
-                .name = name,
+                .name = .{ .src = name },
                 .default_value = default_value,
             });
 

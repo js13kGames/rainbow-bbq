@@ -25,7 +25,7 @@ const Printer = struct {
             .@"var" => |node| {
                 try this.w.writeAll(@tagName(node.decl_type));
                 try this.w.writeByte(' ');
-                try this.w.writeAll(this.src[node.name.start..node.name.end]);
+                try this.w.writeAll(node.name.toString(this.src));
 
                 if (node.value) |value| {
                     try this.w.writeByte('=');
@@ -80,9 +80,11 @@ const Printer = struct {
         };
 
         switch (expr) {
-            .identifier, .number, .string => |*token| try this.w.writeAll(this.src[token.start..token.end]),
-            .identifier_custom, .string_custom => |str| try this.w.writeAll(str),
-            .number_custom => |number| try this.w.printFloat(number, .{}),
+            .identifier, .string => |*token| try this.w.writeAll(token.toString(this.src)),
+            .number => |number| switch (number) {
+                .src => |src| try this.w.writeAll(src.toString(this.src)),
+                .custom => |num| try this.w.printFloat(num, .{}),
+            },
             .call => |node| {
                 try this.printExpression(node.subject.*, this_prec);
                 try this.w.writeByte('(');
@@ -126,7 +128,7 @@ const Printer = struct {
             .dot => |node| {
                 try this.printExpression(node.subject.*, this_prec);
                 try this.w.writeAll(node.dot_type.toString());
-                try this.w.writeAll(this.src[node.field.start..node.field.end]);
+                try this.w.writeAll(node.field.toString(this.src));
             },
             .unary => |node| {
                 switch (node.op) {

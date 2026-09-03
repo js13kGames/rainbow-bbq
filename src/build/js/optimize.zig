@@ -60,7 +60,7 @@ const Optimizer = struct {
             const field_name = dot.field.toString(this.options.src);
             if (glenum_to_value.get(field_name)) |value| {
                 node.* = .{
-                    .number_custom = value,
+                    .number = .{ .custom = value },
                 };
                 return true;
             }
@@ -94,12 +94,12 @@ const Optimizer = struct {
             if (await_fetch.op != .await) return false;
 
             const fetch_call: ast.CallExpr = unionField(await_fetch.subject, .call) orelse return false;
-            const fetch_ident: Token = unionField(fetch_call.subject, .identifier) orelse return false;
+            const fetch_ident: ast.Text = unionField(fetch_call.subject, .identifier) orelse return false;
             if (!std.mem.eql(u8, fetch_ident.toString(this.options.src), "fetch")) return false;
 
             // Ok...
             // Now find file
-            const shader_fname_token: ast.Token = unionField(fetch_call.args[0], .string) orelse return false;
+            const shader_fname_token: ast.Text = unionField(fetch_call.args[0], .string) orelse return false;
             const shader_fname = blk: {
                 const token_str = shader_fname_token.toString(this.options.src);
                 break :blk token_str[1 .. token_str.len - 1];
@@ -138,7 +138,7 @@ const Optimizer = struct {
 
             // Ok, now inline it
             const inline_content = try std.mem.join(this.arena, "", &.{ "`", shader_source, "`" });
-            node.* = .{ .string_custom = inline_content };
+            node.* = .{ .string = .{ .custom = inline_content } };
             return true;
         }
     };

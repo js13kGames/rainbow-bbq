@@ -2,21 +2,34 @@ const std = @import("std");
 
 pub const Token = @import("tokenizer.zig").Token;
 
+pub const Text = union(enum) {
+    src: Token,
+    custom: []const u8,
+
+    /// The returned string is either from the src array, or a const string.
+    /// No need to free it.
+    pub fn toString(this: Text, src: []const u8) []const u8 {
+        return switch (this) {
+            .src => |token| token.toString(src),
+            .custom => |str| str,
+        };
+    }
+};
+
+pub const Number = union(enum) {
+    src: Token,
+    custom: f64,
+};
+
 pub const FnParam = struct {
-    name: Token,
+    name: Text,
     default_value: ?*Expression,
 };
 
 pub const Expression = union(enum) {
-    // These ones are injected in the optimization step
-    number_custom: f64,
-    string_custom: []const u8,
-    identifier_custom: []const u8,
-
-    // These ones are all read from the source files
-    number: Token,
-    string: Token,
-    identifier: Token,
+    number: Number,
+    string: Text,
+    identifier: Text,
     object: ObjectLiteral,
     array: ArrayLiteral,
     arrow_fn: ArrowFn,
@@ -89,9 +102,9 @@ pub const ObjectLiteral = struct {
     entries: []Entry,
 
     pub const Key = union(enum) {
-        identifier: Token,
-        number: Token,
-        string: Token,
+        identifier: Text,
+        number: Text,
+        string: Text,
         expression: *Expression,
     };
 
@@ -128,7 +141,7 @@ pub const CallExpr = struct {
 pub const DotExpr = struct {
     subject: *Expression,
     dot_type: Token.Kind,
-    field: Token,
+    field: Text,
 };
 
 pub const Statement = union(enum) {
@@ -146,7 +159,7 @@ pub const BlockStmnt = struct {
 
 pub const VarStmnt = struct {
     decl_type: Token.Kind,
-    name: Token,
+    name: Text,
     value: ?*Expression,
 };
 
@@ -162,7 +175,7 @@ pub const ThrowStmnt = struct {
 
 pub const TryStmnt = struct {
     pub const CatchBlock = struct {
-        capture: ?Token,
+        capture: ?Text,
         block: BlockStmnt,
     };
 
@@ -323,9 +336,9 @@ pub fn Walker(comptime Context: type) type {
                 .suffix => |*node| this.expression(node.subject),
                 .unary => |*node| this.expression(node.subject),
 
-                .identifier, .identifier_custom => {},
-                .number, .number_custom => {},
-                .string, .string_custom => {},
+                .identifier => {},
+                .number => {},
+                .string => {},
             }
 
             if (repeat) {

@@ -88,7 +88,7 @@ const Parser = struct {
     fn parseTopDecl(this: *Parser) Error!?ast.TopDecl {
         const token = this.peekToken() orelse return null;
         return switch (token.kind) {
-            .directive => .{ .directive = try this.nextTokenExpect(.directive) },
+            .directive => .{ .directive = .{ .src = try this.nextTokenExpect(.directive) } },
             .uniform, .in, .out, .flat, .smooth, .@"const", .layout => .{ .var_decl = try this.parseVarDecl() },
             .lowp, .mediump, .highp, .identifier => try this.parseVarOrFunction(),
             .precision => try this.parsePrecisionSpec(),
@@ -132,8 +132,8 @@ const Parser = struct {
     fn parseExpression(this: *Parser) Error!ast.Expression {
         var node: ast.Expression = switch (this.peekToken().?.kind) {
             .paren_open => try this.parseWrappedExpr(),
-            .identifier => .{ .identifier = try this.nextTokenExpect(.identifier) },
-            .number => .{ .number = try this.nextTokenExpect(.number) },
+            .identifier => .{ .identifier = .{ .src = try this.nextTokenExpect(.identifier) } },
+            .number => .{ .number = .{ .src = try this.nextTokenExpect(.number) } },
             .not, .neg, .minus, .plus, .increment, .decrement => try this.parseExprUnary(),
 
             else => |kind| {
@@ -192,7 +192,7 @@ const Parser = struct {
 
         return .{ .precision = .{
             .precision = precision,
-            .name = name,
+            .name = .{ .src = name },
         } };
     }
 
@@ -216,7 +216,7 @@ const Parser = struct {
         return .{
             .function = .{
                 .return_type = return_type,
-                .name = name,
+                .name = .{ .src = name },
                 .parameters = try this.arena.dupe(ast.Function.Parameter, params.items),
                 .body = (try this.parseStmntBlock()).block,
             },
@@ -246,13 +246,13 @@ const Parser = struct {
         return .{
             .direction = direction,
             .type = param_type,
-            .name = param_name,
+            .name = .{ .src = param_name },
             .array_members = try this.arena.dupe(ast.Expression, array_members.items),
         };
     }
 
     fn parseVarDecl(this: *Parser) Error!ast.VarDecl {
-        var location: ?Token = null;
+        var location: ?ast.Number = null;
         var interpolation: ?Token.Kind = null;
         var storage: ?Token.Kind = null;
         var array_members: std.ArrayList(ast.Expression) = .empty;
@@ -265,7 +265,7 @@ const Parser = struct {
                 try this.nextExpect(.paren_open);
                 try this.nextExpect(.location);
                 try this.nextExpect(.equals);
-                location = try this.nextTokenExpect(.number);
+                location = .{ .src = try this.nextTokenExpect(.number) };
                 try this.nextExpect(.paren_close);
             },
         }
@@ -306,7 +306,7 @@ const Parser = struct {
             .interpolation_qualifier = interpolation,
             .storage_qualifier = storage,
             .type = var_type,
-            .name = var_name,
+            .name = .{ .src = var_name },
             .array_members = try this.arena.dupe(ast.Expression, array_members.items),
             .value = var_value,
         };
@@ -324,7 +324,7 @@ const Parser = struct {
 
         return .{
             .precision = precision,
-            .name = try this.nextTokenExpect(.identifier),
+            .name = .{ .src = try this.nextTokenExpect(.identifier) },
         };
     }
 
@@ -443,7 +443,7 @@ const Parser = struct {
         return .{
             .dot = .{
                 .subject = try this.allocNode(previous),
-                .field = field_name,
+                .field = .{ .src = field_name },
             },
         };
     }

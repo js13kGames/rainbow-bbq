@@ -20,7 +20,9 @@ const Printer = struct {
 
     fn printVarDecl(this: *Printer, node: ast.VarDecl) Error!void {
         if (node.location) |location| {
-            try this.w.print("layout(location={s})", .{location.toString(this.src)});
+            try this.w.writeAll("layout(location=");
+            try this.printExpression(.{ .number = location }, null);
+            try this.w.writeAll(")");
         }
         if (node.interpolation_qualifier) |qual| {
             try this.w.writeAll(qual.toString());
@@ -111,12 +113,6 @@ const Printer = struct {
                 try this.w.writeAll(node.toString(this.src));
                 try this.w.writeByte('\n');
             },
-            .directive_custom => |node| {
-                // Directives must be on their own line
-                if (!this.is_new_line) try this.w.writeByte('\n');
-                try this.w.writeAll(node);
-                try this.w.writeByte('\n');
-            },
             .block => |node| {
                 try this.w.writeByte('{');
                 for (node.children) |child| {
@@ -150,9 +146,11 @@ const Printer = struct {
         };
 
         switch (expr) {
-            .identifier, .number => |*token| try this.w.writeAll(this.src[token.start..token.end]),
-            .identifier_custom => |str| try this.w.writeAll(str),
-            .number_custom => |number| try this.w.printFloat(number, .{}),
+            .identifier => |*token| try this.w.writeAll(token.toString(this.src)),
+            .number => |number| switch (number) {
+                .src => |src| try this.w.writeAll(src.toString(this.src)),
+                .custom => |num| try this.w.printFloat(num, .{}),
+            },
             .call => |node| {
                 try this.printExpression(node.subject.*, this_prec);
                 try this.w.writeByte('(');
@@ -172,7 +170,7 @@ const Printer = struct {
             .dot => |node| {
                 try this.printExpression(node.subject.*, this_prec);
                 try this.w.writeByte('.');
-                try this.w.writeAll(this.src[node.field.start..node.field.end]);
+                try this.w.writeAll(node.field.toString(this.src));
             },
             .unary => |node| {
                 try this.w.writeAll(node.op.toString());
