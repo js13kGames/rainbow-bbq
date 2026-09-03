@@ -14,7 +14,7 @@
     );
 
     // Create vertex shader
-    shaderV = gl.createShader(gl.VERTEX_SHADER);
+    const shaderV = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(shaderV, await (await fetch("shader.vert.glsl")).text());
     gl.compileShader(shaderV);
 
@@ -23,7 +23,7 @@
     }
 
     // Create fragment shader
-    shaderF = gl.createShader(gl.FRAGMENT_SHADER);
+    const shaderF = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(shaderF, await (await fetch("shader.frag.glsl")).text());
     gl.compileShader(shaderF);
 
@@ -32,7 +32,7 @@
     }
 
     // Link shaders into a program
-    program = gl.createProgram();
+    const program = gl.createProgram();
     gl.attachShader(program, shaderV);
     gl.attachShader(program, shaderF);
     gl.linkProgram(program);

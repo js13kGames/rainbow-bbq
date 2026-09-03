@@ -152,6 +152,222 @@ const Optimizer = struct {
         }
     };
 
+    /// Only apply this one ONCE
+    const MinifyNames = struct {
+        const Name = struct {
+            name: []const u8,
+            usages: std.ArrayList(*ast.Text) = .empty,
+        };
+
+        const Scope = struct {
+            node: *const anyopaque,
+            seen_before: usize,
+        };
+
+        const Walker = struct {
+            gpa: std.mem.Allocator,
+            arena: std.mem.Allocator,
+            src: []const u8,
+
+            reserved_names: std.StringHashMap(void),
+            names: std.ArrayList(Name) = .empty,
+            blocks: std.ArrayList(Scope) = .empty,
+            in_scope: std.ArrayList(usize) = .empty,
+
+            fn findOrDeclare(this: *Walker, name: *ast.Text) *Name {
+                if (this.findDecl(name)) |existing| {
+                    return existing;
+                }
+
+                const slot = this.names.addOne(this.gpa) catch @panic("OOM");
+                slot.* = .{
+                    .name = name.toString(this.src),
+                    .usages = std.ArrayList(*ast.Text).initCapacity(this.gpa, 4) catch @panic("OOM"),
+                };
+
+                this.in_scope.append(this.gpa, this.names.items.len - 1) catch @panic("OOM");
+                return slot;
+            }
+
+            fn findDecl(this: *Walker, name: *ast.Text) ?*Name {
+                const name_str = name.toString(this.src);
+
+                for (this.in_scope.items) |i| {
+                    const existing = &this.names.items[i];
+                    if (std.mem.eql(u8, name_str, existing.name)) {
+                        return existing;
+                    }
+                }
+
+                return null;
+            }
+
+            fn pushScope(this: *Walker, val: *const anyopaque) void {
+                this.blocks.append(this.gpa, .{
+                    .node = val,
+                    .seen_before = this.in_scope.items.len,
+                }) catch @panic("OOM");
+            }
+
+            fn popScope(this: *Walker) void {
+                const frame = this.blocks.pop().?;
+                this.in_scope.items.len = frame.seen_before;
+            }
+
+            /// Returns true if scope was opened
+            fn handleScope(this: *Walker, node: *const anyopaque) bool {
+                const frame = this.blocks.last() orelse {
+                    this.pushScope(node);
+                    return true;
+                };
+
+                if (frame.node != node) {
+                    this.pushScope(node);
+                    return true;
+                }
+
+                // Popped block, yay!
+                this.popScope();
+                return false;
+            }
+
+            fn statement(this: *Walker, stmnt: *ast.Statement) ast.WalkResult {
+                switch (stmnt.*) {
+                    .block => {
+                        _ = this.handleScope(stmnt);
+                        return .repeat;
+                    },
+
+                    .@"var" => |*decl| {
+                        const name = this.findOrDeclare(&decl.name);
+                        name.usages.append(this.gpa, &decl.name) catch @panic("OOM");
+                    },
+
+                    // .@"try" => @panic("todo"),
+
+                    else => {},
+                }
+
+                return .walk;
+            }
+
+            fn expression(this: *Walker, expr: *ast.Expression) ast.WalkResult {
+                switch (expr.*) {
+                    .identifier => |*node| {
+                        if (this.findDecl(node)) |decl| {
+                            decl.usages.append(this.gpa, node) catch @panic("OOM");
+                        } else {
+                            this.reserved_names.put(node.toString(this.src), {}) catch @panic("OOM");
+                        }
+                    },
+
+                    .arrow_fn => |*node| {
+                        if (this.handleScope(expr)) {
+                            for (node.params) |*param| {
+                                const param_name = this.findOrDeclare(&param.name);
+                                param_name.usages.append(this.gpa, &param.name) catch @panic("OOM");
+                            }
+                            return .repeat;
+                        }
+                    },
+
+                    else => {},
+                }
+
+                return .walk;
+            }
+        };
+
+        const NameGenerator = struct {
+            name_idx: usize = 0,
+            reserved_names: std.StringHashMap(void),
+
+            const charset_0 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+            const charset_n = charset_0 ++ "0123456789";
+
+            fn generateName(name_idx: usize, buf: []u8) []const u8 {
+                var i: usize = 0;
+                var n: usize = name_idx;
+
+                // Always emit first char
+                {
+                    const rem = n % charset_0.len;
+                    n = n / charset_0.len;
+                    buf[i] = charset_0[rem];
+                    i += 1;
+                }
+
+                while (n != 0) {
+                    const rem = n % charset_n.len;
+                    n = n / charset_n.len;
+                    buf[i] = charset_n[rem];
+                    i += 1;
+                }
+
+                return buf[0..i];
+            }
+
+            fn generateUniqueName(this: *NameGenerator, buf: []u8) []const u8 {
+                while (true) {
+                    const name = generateName(this.name_idx, buf);
+                    this.name_idx += 1;
+
+                    if (!this.reserved_names.contains(name)) {
+                        return name;
+                    }
+                }
+            }
+        };
+
+        fn run(this: *Optimizer, nodes: []ast.Statement) !void {
+            var context = Walker{
+                .gpa = this.options.gpa,
+                .arena = this.arena,
+                .src = this.options.src,
+
+                .reserved_names = .init(this.options.gpa),
+            };
+
+            defer {
+                // Free everything
+                for (context.names.items) |*name| name.usages.deinit(context.gpa);
+                context.names.deinit(context.gpa);
+                context.in_scope.deinit(context.gpa);
+                context.blocks.deinit(context.gpa);
+                context.reserved_names.deinit();
+            }
+
+            ast.walk(nodes, &context, .{
+                .statement = Walker.statement,
+                .expression = Walker.expression,
+            });
+
+            // Sort by number of usages
+            // Sort cels
+            std.sort.insertion(Name, context.names.items, {}, struct {
+                fn inner(_: void, a: Name, b: Name) bool {
+                    return a.usages.items.len > b.usages.items.len;
+                }
+            }.inner);
+
+            var name_generator = NameGenerator{
+                .reserved_names = context.reserved_names,
+            };
+
+            for (context.names.items) |name| {
+                // Generate replacement name
+                var buf: [64]u8 = undefined;
+                const gen_name = name_generator.generateUniqueName(&buf);
+                const gen_name_alloc = try this.arena.dupe(u8, gen_name);
+
+                // Go and actually replace it
+                for (name.usages.items) |text| {
+                    text.* = .{ .custom = gen_name_alloc };
+                }
+            }
+        }
+    };
+
     fn applyOptExpression(this: *Optimizer, expr: *ast.Expression) Error!void {
         while (true) {
             var ran = false;
@@ -191,4 +407,7 @@ pub fn optimize(nodes: []ast.Statement, arena: std.mem.Allocator, options: *cons
         .statement = Context.statement,
         .expression = Context.expression,
     });
+
+    // Aaaaand mangle names
+    try Optimizer.MinifyNames.run(&context.o, &nodes_wrapped);
 }
