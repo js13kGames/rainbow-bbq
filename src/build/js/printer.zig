@@ -103,23 +103,24 @@ const Printer = struct {
                 if (node.async) try this.w.writeAll("async");
                 if (node.params.len == 1 and node.params[0].default_value == null) {
                     const token = node.params[0].name;
-                    try this.w.writeAll(this.src[token.start..token.end]);
+                    try this.w.writeAll(token.toString(this.src));
                 } else {
                     try this.w.writeByte('(');
                     for (node.params, 0..) |param, i| {
                         if (i != 0) try this.w.writeByte(',');
-                        try this.w.writeAll(this.src[param.name.start..param.name.end]);
+                        try this.w.writeAll(param.name.toString(this.src));
                         if (param.default_value) |default_value| {
                             try this.w.writeByte('=');
                             try this.printExpression(default_value.*, null);
                         }
                     }
-                    try this.w.writeAll(")=>");
+                    try this.w.writeAll(")");
+                }
 
-                    switch (node.body) {
-                        .block => |body| try this.printStatement(.{ .block = body.* }, false),
-                        .expression => |body| try this.printExpression(body.*, this_prec),
-                    }
+                try this.w.writeAll("=>");
+                switch (node.body) {
+                    .block => |body| try this.printStatement(.{ .block = body.* }, false),
+                    .expression => |body| try this.printExpression(body.*, this_prec),
                 }
             },
             .dot => |node| {
