@@ -78,7 +78,7 @@ pub const Matrix = struct {
     /// You get to decide the low bound of the clip space Z-dimension.
     pub fn perspective(comptime ndc_z_low: i1, fov_y_rad: f32, aspect: f32, z_near: f32, z_far: f32) Matrix {
         var out: Matrix = .{};
-        const f: f32 = 1.0 / @tan(fov_y_rad / 2);
+        const f: f32 = 1.0 / js.tan(fov_y_rad / 2);
 
         out.m[0][0] = f / aspect;
         out.m[1][1] = f;
@@ -213,23 +213,23 @@ pub const Vector = struct {
         return .{ .v = res };
     }
 
-    pub fn add3(this: Vector, other: Vector) Vector {
+    pub inline fn add3(this: Vector, other: Vector) Vector {
         var r = this.v + other.v;
         r[3] = 1;
         return .{ .v = r };
     }
 
-    pub fn add4(this: Vector, other: Vector) Vector {
+    pub inline fn add4(this: Vector, other: Vector) Vector {
         return .{ .v = this.v + other.v };
     }
 
-    pub fn sub3(this: Vector, other: Vector) Vector {
+    pub inline fn sub3(this: Vector, other: Vector) Vector {
         var r = this.v - other.v;
         r[3] = 1;
         return .{ .v = r };
     }
 
-    pub fn sub4(this: Vector, other: Vector) Vector {
+    pub inline fn sub4(this: Vector, other: Vector) Vector {
         return .{ .v = this.v - other.v };
     }
 
@@ -257,12 +257,12 @@ pub const Vector = struct {
         );
     }
 
-    pub fn dot3(this: Vector, other: Vector) f32 {
+    pub inline fn dot3(this: Vector, other: Vector) f32 {
         const r = this.v * other.v;
         return r[0] + r[1] + r[2];
     }
 
-    pub fn cross(this: Vector, other: Vector) Vector {
+    pub inline fn cross(this: Vector, other: Vector) Vector {
         const tmp0: Vec4 = .{ this.v[1], this.v[2], this.v[0], 1 };
         const tmp1: Vec4 = .{ other.v[2], other.v[0], other.v[1], 1 };
         const tmp2: Vec4 = .{ this.v[2], this.v[0], this.v[1], 1 };

@@ -81,6 +81,7 @@
         /*  4: Math.atan2   */  Math.atan2,
         /*  5: Math.sin     */  Math.sin,
         /*  6: Math.cos     */  Math.cos,
+        /*  7: Math.tan     */  Math.tan,
     ]});
 
     // Register inputs
