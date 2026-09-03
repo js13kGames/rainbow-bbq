@@ -48,26 +48,26 @@ pub fn For(comptime Ast: type) type {
                 switch (@typeInfo(T)) {
                     .@"union" => |t| {
                         const active = std.meta.activeTag(node);
-                        inline for (t.fields) |field| {
-                            const field_enum = @field(std.meta.Tag(T), field.name);
+                        inline for (t.field_names) |field_name| {
+                            const field_enum = @field(std.meta.Tag(T), field_name);
                             if (active == field_enum) {
-                                const field_val = @field(node, field.name);
+                                const field_val = @field(node, field_name);
                                 try this.strNode(field_val);
                                 break;
                             }
                         }
                     },
                     .@"struct" => |t| {
-                        if (t.fields.len == 0) {
+                        if (t.field_names.len == 0) {
                             try this.w.print("{s} {{}}");
                         } else {
                             try this.w.print("{s} {{\n", .{@typeName(T)});
                             this.i += 1;
 
-                            inline for (t.fields) |field| {
+                            inline for (t.field_names) |field_name| {
                                 try this.indent();
-                                try this.w.print("{s}: ", .{field.name});
-                                try this.strNode(@field(node, field.name));
+                                try this.w.print("{s}: ", .{field_name});
+                                try this.strNode(@field(node, field_name));
                                 try this.w.writeByte('\n');
                             }
 
