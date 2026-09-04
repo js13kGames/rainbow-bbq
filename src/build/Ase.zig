@@ -28,6 +28,7 @@ pub fn pixelsPerFrame(this: *const Ase) usize {
 
 pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
     std.debug.assert(frame_idx < this.frames.len);
+    std.debug.assert(buffer.len >= this.pixelsPerFrame());
     const frame = &this.frames[frame_idx];
 
     const cw = @as(usize, this.header.width);
@@ -46,10 +47,9 @@ pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
             .compressed_img => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
             else => @panic("bad"),
         };
-        std.debug.assert(cel_x + cel_w <= this.header.width);
-        std.debug.assert(cel_y + cel_h <= this.header.height);
+        std.debug.assert(cel_x + cel_w <= cw);
+        std.debug.assert(cel_y + cel_h <= ch);
 
-        const base = cel_x + cel_y * ch;
         var i: usize = 0;
 
         for (0..cel_h) |y| {
@@ -71,7 +71,7 @@ pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
                 };
                 if (src_pixel[3] == 0) continue;
 
-                buffer[base + y * this.header.width + x] = src_pixel;
+                buffer[(cel_y + y) * cw + (cel_x + x)] = src_pixel;
             }
         }
     }
