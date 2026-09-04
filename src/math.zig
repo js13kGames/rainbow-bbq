@@ -258,6 +258,12 @@ pub const Vector = struct {
         return .{ .v = mtx.m[0] * x + mtx.m[1] * y + mtx.m[2] * z + mtx.m[3] * w };
     }
 
+    pub fn length(this: Vector) f32 {
+        const sqr = this.v * this.v;
+        const len_sqr = sqr[0] + sqr[1] + sqr[2];
+        return @sqrt(len_sqr);
+    }
+
     pub fn normalize3(this: Vector) Vector {
         const sqr = this.v * this.v;
         const len_sqr = sqr[0] + sqr[1] + sqr[2];
@@ -285,6 +291,10 @@ pub const Vector = struct {
 
     pub inline fn sub4(this: Vector, other: Vector) Vector {
         return .{ .v = this.v - other.v };
+    }
+
+    pub inline fn mulScalar(this: Vector, other: f32) Vector {
+        return .{ .v = this.v * @as(Vec4, @splat(other)) };
     }
 
     pub fn rotateX(this: Vector, rad: f32) Vector {

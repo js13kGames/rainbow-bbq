@@ -4,8 +4,25 @@ const Sprite = @import("Sprite");
 const js = @import("js.zig");
 const render = @import("render.zig");
 const math = @import("math.zig");
-const Camera = @import("camera.zig").CameraPerspective;
+const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
+const Player = @import("Player.zig");
+
+pub const std_options = std.Options{
+    .logFn = struct {
+        fn inner(
+            comptime message_level: std.log.Level,
+            comptime scope: @EnumLiteral(),
+            comptime format: []const u8,
+            args: anytype,
+        ) void {
+            var buf: [2048]u8 = undefined;
+            const str = std.fmt.bufPrint(&buf, format, args) catch "could not format string";
+            js.log(message_level, str);
+            _ = scope;
+        }
+    }.inner,
+};
 
 /// This is the "initial" function
 export fn a() void {
@@ -19,11 +36,7 @@ export fn a() void {
 }
 
 var frame: f32 = 0;
-var camera = Camera{
-    .position = .{ .v = .{ 0, -2, 0, 1 } },
-    .z_near = 0.1,
-    .z_far = 1000,
-};
+var player: Player = .{};
 
 /// This is the main entrypoint
 export fn b() void {
@@ -31,54 +44,51 @@ export fn b() void {
     js.input.update();
 
     const sprite = Sprite.simple;
-    var transform = render.SpriteDescriptor.fromAtlas(Sprite.simple, .{
+    var transform = render.QuadDescriptor.fromAtlas(Sprite.simple, .{
         .origin = .{ 0.5, 0.5 },
-        .pos = .{ 30, 30 },
-        .angle = frame,
+        .pos = .{ 30, 30, 1 },
+        .rot = .{ std.math.pi / 2.0, 0, frame },
         .scale = .{ 4, 4 },
     });
 
-    var move: math.Vector = .{ .v = .{ 0, 0, 0, 1 } };
+    player.update();
 
-    const move_speed = 0.5;
-    if (js.input.keys['A'].isHeld()) move.v[0] = -move_speed;
-    if (js.input.keys['D'].isHeld()) move.v[0] = move_speed;
-    if (js.input.keys['S'].isHeld()) move.v[1] = -move_speed;
-    if (js.input.keys['W'].isHeld()) move.v[1] = move_speed;
-    if (js.input.keys[16].isHeld()) move.v[2] = -move_speed;
-    if (js.input.keys[' '].isHeld()) move.v[2] = move_speed;
-
-    render.camera.position = render.camera.position.add3(move.rotateZ(render.camera.yaw_rad));
-
+    // Render main game world
     const matrix = render.camera.getMatrix();
     render.pushMatrix(&matrix);
     defer render.popMatrix();
 
-    // Draw text cube
-    render.drawCube(sprite.spr);
+    // Draw floor
+    render.drawQuad(Sprite.floor.spr, .fromAtlas(Sprite.floor, .{
+        .scale = .{ 10, 10 },
+        .rot = .{ -std.math.pi / 2.0, 0, 0 },
+    }));
+
+    player.draw();
 
     // Draw test billboard
-    render.drawBillboard(sprite.spr, .{
+    render.drawQuad(sprite.spr, .{
         .size = .{ 16 + js.sin(frame) * 2, 16 },
         .pos = .{ 0, 0, 0 },
     });
 
-    render.drawBillboard(sprite.spr, .{
+    render.drawQuad(sprite.spr, .{
         .size = .{ 16, 16 },
         .pos = .{ 32, 0, 0 },
-        .angle = frame,
+        .rot = .{ 0, frame, 0 },
     });
 
     // Draw BEEG sprite
-    render.drawSprite(sprite.spr, transform);
+    render.drawQuad(sprite.spr, transform);
 
     render.pushMatrix(&math.Matrix.from2DParams(30, 30, 4, 4, frame));
     defer render.popMatrix();
 
     // Draw orbiting sprite
-    render.drawSprite(sprite.spr, transform.base(.{
+    render.drawQuad(sprite.spr, transform.base(.{
         .size = .{ 8, 8 },
-        .pos = .{ -20, -20 },
+        .pos = .{ -20, -20, 0 },
+        .rot = .{ std.math.pi / 2.0, 0, 0 },
     }));
 
     render.flush();
