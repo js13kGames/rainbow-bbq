@@ -11,11 +11,13 @@ out vec4 o_color;
 
 void main() {
     vec2 tex_size = vec2(textureSize(s, 0));
-    uint byte = texture(s, v_uv).x;
 
+    uint byte = texture(s, v_uv).x;
     uint bit_idx = uint(fract(v_uv.x * tex_size.x) * 8.);
 
     uint bit = (byte >> bit_idx) & 1u;
+    vec4 color = v_color[bit];
 
-    o_color = v_color[bit];
+    if (color.a == 0.0) discard;
+    o_color = color;
 }
