@@ -2,6 +2,8 @@
 
 const std = @import("std");
 
+const render = @import("render.zig");
+
 pub inline fn log(log_level: std.log.Level, str: []const u8) void {
     struct {
         extern "1" fn log(log_level: u32, str_start: [*]const u8, str_len: usize) void;
@@ -67,9 +69,6 @@ export fn m(dx: f32, dy: f32) void {
 pub const input = struct {
     pub var keys: [256]DigitalState = undefined;
 
-    pub var mouse_x: f32 = 0;
-    pub var mouse_y: f32 = 0;
-
     var mouse_nx: f32 = 0;
     var mouse_ny: f32 = 0;
 
@@ -100,10 +99,11 @@ pub const input = struct {
     };
 
     pub fn update() void {
-        mouse_x += mouse_nx;
+        render.camera.yaw_rad -= mouse_nx / 300.0;
         mouse_nx = 0;
 
-        mouse_y += mouse_ny;
+        render.camera.pitch_rad -= mouse_ny / 300.0;
+        render.camera.pitch_rad = @min(@max(render.camera.pitch_rad, -std.math.pi / 2.01), std.math.pi / 2.01);
         mouse_ny = 0;
 
         for (&keys, 0..) |key, i| {

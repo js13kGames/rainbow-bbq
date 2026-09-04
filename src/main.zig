@@ -1,11 +1,11 @@
 const std = @import("std");
+const Sprite = @import("Sprite");
+
 const js = @import("js.zig");
 const render = @import("render.zig");
 const math = @import("math.zig");
 const Camera = @import("camera.zig").CameraPerspective;
 const gbcompress = @import("build/gbcompress.zig");
-
-const Sprite = @import("Sprite");
 
 /// This is the "initial" function
 export fn a() void {
@@ -30,54 +30,56 @@ export fn b() void {
     frame += 1.0 / 60.0;
     js.input.update();
 
-    const sprite = render.Sprite.fromAtlas(Sprite.simple, 0.5, 0.5);
-
-    const transform = render.Sprite.Transform{
-        .color_back = Sprite.simple.colors.back,
-        .color_fore = Sprite.simple.colors.fore,
+    const sprite = Sprite.simple;
+    var transform = render.SpriteDescriptor.fromAtlas(Sprite.simple, .{
+        .origin = .{ 0.5, 0.5 },
         .pos = .{ 30, 30 },
         .angle = frame,
         .scale = .{ 4, 4 },
-    };
+    });
 
     var move: math.Vector = .{ .v = .{ 0, 0, 0, 1 } };
 
-    if (js.input.keys['A'].isHeld()) move.v[0] = -0.1;
-    if (js.input.keys['D'].isHeld()) move.v[0] = 0.1;
-    if (js.input.keys['S'].isHeld()) move.v[1] = -0.1;
-    if (js.input.keys['W'].isHeld()) move.v[1] = 0.1;
-    if (js.input.keys[16].isHeld()) move.v[2] = -0.1;
-    if (js.input.keys[' '].isHeld()) move.v[2] = 0.1;
+    const move_speed = 0.5;
+    if (js.input.keys['A'].isHeld()) move.v[0] = -move_speed;
+    if (js.input.keys['D'].isHeld()) move.v[0] = move_speed;
+    if (js.input.keys['S'].isHeld()) move.v[1] = -move_speed;
+    if (js.input.keys['W'].isHeld()) move.v[1] = move_speed;
+    if (js.input.keys[16].isHeld()) move.v[2] = -move_speed;
+    if (js.input.keys[' '].isHeld()) move.v[2] = move_speed;
 
-    camera.yaw_rad = -js.input.mouse_x / 300.0;
-    camera.pitch_rad = -@max(@min(js.input.mouse_y / 300.0, std.math.pi / 2.01), -std.math.pi / 2.01);
+    render.camera.position = render.camera.position.add3(move.rotateZ(render.camera.yaw_rad));
 
-    camera.position = camera.position.add3(move.rotateZ(camera.yaw_rad));
-
-    const matrix = camera.getMatrix();
+    const matrix = render.camera.getMatrix();
     render.pushMatrix(&matrix);
     defer render.popMatrix();
 
-    render.drawCube(&sprite);
+    // Draw text cube
+    render.drawCube(sprite.spr);
 
-    sprite.draw(&.{
-        .color_back = .{ 255, 255, 255, 255 },
-        .color_fore = .{ 0, 0, 0, 255 },
-        .scale = .{ 0.5 / sprite.size[0], 0.5 / sprite.size[1] },
+    // Draw test billboard
+    render.drawBillboard(sprite.spr, .{
+        .size = .{ 16 + js.sin(frame) * 2, 16 },
+        .pos = .{ 0, 0, 0 },
     });
 
-    sprite.draw(&transform);
+    render.drawBillboard(sprite.spr, .{
+        .size = .{ 16, 16 },
+        .pos = .{ 32, 0, 0 },
+        .angle = frame,
+    });
 
-    const mtx = transform.toMatrix();
-    render.pushMatrix(&mtx);
+    // Draw BEEG sprite
+    render.drawSprite(sprite.spr, transform);
+
+    render.pushMatrix(&math.Matrix.from2DParams(30, 30, 4, 4, frame));
     defer render.popMatrix();
 
-    sprite.draw(&.{
-        .color_back = Sprite.simple.colors.back,
-        .color_fore = Sprite.simple.colors.fore,
-        .scale = .{ 0.5, 0.5 },
+    // Draw orbiting sprite
+    render.drawSprite(sprite.spr, transform.base(.{
+        .size = .{ 8, 8 },
         .pos = .{ -20, -20 },
-    });
+    }));
 
     render.flush();
 }

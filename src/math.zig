@@ -31,19 +31,23 @@ pub const Matrix = struct {
     }
 
     /// Translates a matrix in place
-    pub fn translate(this: *Matrix, x: f32, y: f32, z: f32) void {
+    pub fn translate(this: *Matrix, x: f32, y: f32, z: f32) *Matrix {
         this.m[3] =
             this.m[0] * @as(Vec4, @splat(x)) +
             this.m[1] * @as(Vec4, @splat(y)) +
             this.m[2] * @as(Vec4, @splat(z)) +
             this.m[3];
+
+        return this;
     }
 
     /// Scales a matrix in place
-    pub fn scale(this: *Matrix, x: f32, y: f32, z: f32) void {
+    pub fn scale(this: *Matrix, x: f32, y: f32, z: f32) *Matrix {
         this.m[0] = this.m[0] * @as(Vec4, @splat(x));
         this.m[1] = this.m[1] * @as(Vec4, @splat(y));
         this.m[2] = this.m[2] * @as(Vec4, @splat(z));
+
+        return this;
     }
 
     /// Create a new matrix from a translation
@@ -64,6 +68,17 @@ pub const Matrix = struct {
             .{ 0, 0, z, 0 },
             .{ 0, 0, 0, 1 },
         } };
+    }
+
+    pub fn from2DParams(x: f32, y: f32, xscale: f32, yscale: f32, angle: f32) Matrix {
+        return .fromTransform2D(
+            js.cos(angle) * xscale,
+            js.sin(angle) * xscale,
+            -js.sin(angle) * yscale,
+            js.cos(angle) * yscale,
+            x,
+            y,
+        );
     }
 
     pub fn fromTransform2D(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) Matrix {
@@ -169,6 +184,45 @@ pub const Matrix = struct {
             .{ axis_x.v[2], axis_y.v[2], axis_z.v[2], 0 },
             .{ -(axis_x.dot3(eye)), -(axis_y.dot3(eye)), -(axis_z.dot3(eye)), 1 },
         } };
+    }
+
+    /// Mutates matrix in place
+    pub fn rotateX(this: *Matrix, angle_rad: f32) *Matrix {
+        const r1 = this.m[1];
+        const r2 = this.m[2];
+        const c = js.cos(angle_rad);
+        const s = js.sin(angle_rad);
+
+        this.m[1] = @as(Vec4, @splat(c)) * r1 + @as(Vec4, @splat(s)) * r2;
+        this.m[2] = @as(Vec4, @splat(c)) * r2 - @as(Vec4, @splat(s)) * r1;
+
+        return this;
+    }
+
+    /// Mutates matrix in place
+    pub fn rotateY(this: *Matrix, angle_rad: f32) *Matrix {
+        const r0 = this.m[0];
+        const r2 = this.m[2];
+        const c = js.cos(angle_rad);
+        const s = js.sin(angle_rad);
+
+        this.m[0] = @as(Vec4, @splat(c)) * r0 - @as(Vec4, @splat(s)) * r2;
+        this.m[2] = @as(Vec4, @splat(c)) * r2 + @as(Vec4, @splat(s)) * r0;
+
+        return this;
+    }
+
+    /// Mutates matrix in place
+    pub fn rotateZ(this: *Matrix, angle_rad: f32) *Matrix {
+        const r0 = this.m[0];
+        const r1 = this.m[1];
+        const c = js.cos(angle_rad);
+        const s = js.sin(angle_rad);
+
+        this.m[0] = @as(Vec4, @splat(c)) * r0 + @as(Vec4, @splat(s)) * r1;
+        this.m[1] = @as(Vec4, @splat(c)) * r1 - @as(Vec4, @splat(s)) * r0;
+
+        return this;
     }
 };
 
