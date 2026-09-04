@@ -71,8 +71,8 @@ pub const Camera2D = struct {
 
     pub fn getMatrix(this: *const @This()) Matrix {
         var mat = Matrix{};
-        mat.scale(2 / this.width, 2 / -this.height, 1);
-        mat.translate(-this.x, this.y, 0);
-        return mat;
+        return mat
+            .scale(2 / this.width, 2 / -this.height, 1)
+            .translate(-this.x, this.y, 0).*;
     }
 };

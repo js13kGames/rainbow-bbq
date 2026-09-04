@@ -64,6 +64,7 @@
         /*  2: draw         */  (vertexPtr, numVerts) => {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Uint8Array(wasmMemory.buffer, vertexPtr, numVerts * 32));
             gl.drawArrays(gl.TRIANGLES, 0, numVerts);
+            gl.clear(gl.DEPTH_BUFFER_BIT);
         },
         /*  3: texUpload    */  (dataPtr, texWidth, texHeight) => {
             const texture = gl.createTexture();
