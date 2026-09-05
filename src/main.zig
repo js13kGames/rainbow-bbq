@@ -3,7 +3,7 @@ const Sprite = @import("Sprite");
 
 const js = @import("js.zig");
 const render = @import("render.zig");
-const math = @import("math.zig");
+const mtx = @import("mtx.zig");
 const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
 const Player = @import("Player.zig");
@@ -82,7 +82,7 @@ export fn b() void {
         // Draw BEEG sprite
         render.drawQuad(sprite.spr, transform);
 
-        render.pushMatrix(&math.Matrix.from2DParams(30, 30, 4, 4, frame));
+        render.pushMatrix(&mtx.Matrix.from2DParams(30, 30, 4, 4, frame));
         defer render.popMatrix();
 
         // Draw orbiting sprite
@@ -98,7 +98,7 @@ export fn b() void {
     // Render UI
     {
         // Create 2D camera matrix
-        const mtx = comptime (camera.Camera2D{
+        const camera_matrix = comptime (camera.Camera2D{
             .x = 80,
             .y = -72,
             .width = 160,
@@ -106,7 +106,7 @@ export fn b() void {
             .z_near = -10,
             .z_far = 10,
         }).getMatrix();
-        render.pushMatrix(&mtx);
+        render.pushMatrix(&camera_matrix);
         defer render.popMatrix();
 
         // Ok now draw a sprite

@@ -4,11 +4,11 @@ const std = @import("std");
 const Sprite = @import("Sprite");
 
 const render = @import("render.zig");
-const math = @import("math.zig");
+const mtx = @import("mtx.zig");
 const js = @import("js.zig");
 
-position: math.Vector = .init(0, 0, @as(f32, Sprite.unicorn.h) / 2.0),
-speed: math.Vector = .init(0, 0, 0),
+position: mtx.Vector = .init(0, 0, @as(f32, Sprite.unicorn.h) / 2.0),
+speed: mtx.Vector = .init(0, 0, 0),
 
 const move_accel: f32 = 0.035;
 const max_speed = 1.5;
@@ -16,7 +16,7 @@ const max_speed = 1.5;
 pub fn update(this: *Player) void {
     // Build movement vector
     const target_direction = render.camera.yaw_rad;
-    const added_speed = math.Vector.init(0, move_accel, 0).rotateZ(target_direction);
+    const added_speed = mtx.Vector.init(0, move_accel, 0).rotateZ(target_direction);
 
     // Add to current speed
     this.speed = this.speed.add4(added_speed);
@@ -37,7 +37,7 @@ pub fn update(this: *Player) void {
     const camera_distance_h = 50;
     const camera_distance_v = 10;
     render.camera.position = this.position.add4(
-        math.Vector
+        mtx.Vector
             .init(0, -camera_distance_h, camera_distance_v)
             .rotateX(render.camera.pitch_rad)
             .rotateZ(render.camera.yaw_rad),

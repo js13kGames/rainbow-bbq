@@ -2,7 +2,7 @@ const std = @import("std");
 const Sprite = @import("Sprite");
 
 const js = @import("js.zig");
-const math = @import("math.zig");
+const mtx = @import("mtx.zig");
 const Camera = @import("camera.zig").CameraPerspective;
 
 var matrix_storage: [256]math.Matrix = undefined;
@@ -78,37 +78,37 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
     const w = t.size[0];
     const h = t.size[1];
 
-    var mtx = math.Matrix{};
-    mtx
+    var matrix = mtx.Matrix{};
+    matrix
         .translate(t.pos[0], t.pos[1], t.pos[2])
         .rotateZ(t.rot[2])
         .rotateX(t.rot[0])
         .rotateY(t.rot[1])
         .translate(-t.origin[0] * w, 0, -t.origin[1] * h)
         .scale(w, 1, h)
-        .multiply(currentMatrix(), &mtx);
+        .multiply(currentMatrix(), &matrix);
 
     var verts = vertex_buffer.addManyAsSliceAssumeCapacity(6);
     verts[0] = .{
-        .pos = (math.Vector{ .v = .{ 0, 0, 0, 1 } }).transform3(&mtx).v,
+        .pos = (mtx.Vector{ .v = .{ 0, 0, 0, 1 } }).transform3(&matrix).v,
         .uv = .{ spr.u0, spr.v1 },
         .color_back = t.color_back,
         .color_fore = t.color_fore,
     };
     verts[1] = .{
-        .pos = (math.Vector{ .v = .{ 1, 0, 0, 1 } }).transform3(&mtx).v,
+        .pos = (mtx.Vector{ .v = .{ 1, 0, 0, 1 } }).transform3(&matrix).v,
         .uv = .{ spr.u1, spr.v1 },
         .color_back = t.color_back,
         .color_fore = t.color_fore,
     };
     verts[2] = .{
-        .pos = (math.Vector{ .v = .{ 0, 0, 1, 1 } }).transform3(&mtx).v,
+        .pos = (mtx.Vector{ .v = .{ 0, 0, 1, 1 } }).transform3(&matrix).v,
         .uv = .{ spr.u0, spr.v0 },
         .color_back = t.color_back,
         .color_fore = t.color_fore,
     };
     verts[3] = .{
-        .pos = (math.Vector{ .v = .{ 1, 0, 1, 1 } }).transform3(&mtx).v,
+        .pos = (mtx.Vector{ .v = .{ 1, 0, 1, 1 } }).transform3(&matrix).v,
         .uv = .{ spr.u1, spr.v0 },
         .color_back = t.color_back,
         .color_fore = t.color_fore,
@@ -118,12 +118,12 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
     verts[5] = verts[1];
 }
 
-fn currentMatrix() *const math.Matrix {
+fn currentMatrix() *const mtx.Matrix {
     return &matrix_stack.items[matrix_stack.items.len - 1];
 }
 
-pub fn pushMatrix(mtx: *const math.Matrix) void {
-    mtx.multiply(currentMatrix(), matrix_stack.addOneAssumeCapacity());
+pub fn pushMatrix(matrix: *const mtx.Matrix) void {
+    matrix.multiply(currentMatrix(), matrix_stack.addOneAssumeCapacity());
 }
 
 pub fn popMatrix() void {

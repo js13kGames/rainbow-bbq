@@ -1,8 +1,8 @@
 const std = @import("std");
 
-const math = @import("math.zig");
-const Matrix = math.Matrix;
-const Vector = math.Vector;
+const mtx = @import("mtx.zig");
+const Matrix = mtx.Matrix;
+const Vector = mtx.Vector;
 
 /// TODO: eye position
 pub const CameraOrtho = struct {

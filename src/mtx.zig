@@ -2,8 +2,9 @@ const std = @import("std");
 
 const js = @import("js.zig");
 
-const Vec4 = @Vector(4, f32);
-const Vec3 = @Vector(3, f32);
+pub const Vec2 = @Vector(2, f32);
+pub const Vec3 = @Vector(3, f32);
+pub const Vec4 = @Vector(4, f32);
 
 pub const Matrix = struct {
     m: [4]Vec4 = .{
@@ -335,3 +336,11 @@ pub const Vector = struct {
         return .{ .v = (tmp0 * tmp1) - (tmp2 * tmp3) };
     }
 };
+
+pub fn dot2D(a: Vec2, b: Vec2) f32 {
+    return a[0] * b[0] + a[1] * b[1];
+}
+
+pub fn len2D(a: Vec2) f32 {
+    return @sqrt(a[0] * a[0] + a[1] * a[1]);
+}
