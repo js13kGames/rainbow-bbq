@@ -6,6 +6,7 @@ const Sprite = @import("Sprite");
 const render = @import("render.zig");
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
+const collision = @import("collision.zig");
 
 position: mtx.Vector = .init(0, 0, @as(f32, Sprite.unicorn.h) / 2.0),
 speed: mtx.Vector = .init(0, 0, 0),
@@ -31,6 +32,37 @@ pub fn update(this: *Player) void {
     // Ok, now update position
     if (!js.input.keys[' '].isHeld()) {
         this.position = this.position.add4(this.speed);
+
+        const width = 7;
+        const height = 16;
+
+        var points: [8]mtx.Vec2 = undefined;
+        for (&points, 0..) |*point, i| {
+            const angle = if (i == 0) 0.0 else std.math.tau / @as(f32, @floatFromInt(i));
+
+            point.* = .{
+                this.position.v[0] + js.cos(angle) * width,
+                this.position.v[1] + js.sin(angle) * width,
+            };
+        }
+
+        var shape = collision.Polygon{
+            .points = &points,
+            .z_min = 0,
+            .z_max = height,
+            .middle = .{ this.position.v[0], this.position.v[1] },
+        };
+
+        while (collision.collideWithWorld(&shape)) |eject| {
+            shape.move(.init(
+                eject.pen_dir[0] * (eject.pen_length + 0.001),
+                eject.pen_dir[1] * (eject.pen_length + 0.001),
+                0,
+            ));
+        }
+
+        this.position.v[0] = shape.middle.?[0];
+        this.position.v[1] = shape.middle.?[1];
     }
 
     // Move camera

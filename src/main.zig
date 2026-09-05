@@ -7,6 +7,7 @@ const mtx = @import("mtx.zig");
 const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
 const Player = @import("Player.zig");
+const collision = @import("collision.zig");
 
 pub const std_options = std.Options{
     .logFn = struct {
@@ -66,6 +67,10 @@ export fn b() void {
         }));
 
         player.draw();
+
+        for (collision.world_walls) |*wall| {
+            render.drawPolygon3D(wall);
+        }
 
         // Draw test billboard
         render.drawQuad(sprite.spr, .{

@@ -4,12 +4,15 @@ const Sprite = @import("Sprite");
 const js = @import("js.zig");
 const mtx = @import("mtx.zig");
 const Camera = @import("camera.zig").CameraPerspective;
+const collision = @import("collision.zig");
 
-var matrix_storage: [256]math.Matrix = undefined;
-pub var matrix_stack: std.ArrayList(math.Matrix) = .initBuffer(&matrix_storage);
+pub const Vertex = js.Vertex;
+
+var matrix_storage: [256]mtx.Matrix = undefined;
+pub var matrix_stack: std.ArrayList(mtx.Matrix) = .initBuffer(&matrix_storage);
 
 var vertex_storage: [0x1000 * 6]js.Vertex = undefined;
-var vertex_buffer: std.ArrayList(js.Vertex) = .initBuffer(&vertex_storage);
+pub var vertex_buffer: std.ArrayList(js.Vertex) = .initBuffer(&vertex_storage);
 
 pub var camera: Camera = Camera{
     .z_near = 0.1,
@@ -74,6 +77,25 @@ pub const QuadDescriptor = struct {
     }
 };
 
+pub fn transformVector(vec: anytype) [4]f32 {
+    const vector = switch (@TypeOf(vec)) {
+        mtx.Vector => vec,
+        [2]f32, mtx.Vec2 => mtx.Vector.init(vec[0], vec[1], 0),
+        [3]f32, mtx.Vec3 => mtx.Vector.init(vec[0], vec[1], vec[2]),
+        [4]f32, mtx.Vec4 => mtx.Vector{ .v = vec },
+
+        else => @compileError("no, bad"),
+    };
+
+    return vector.transform3(currentMatrix()).v;
+}
+
+pub inline fn pushVertex(vertex: Vertex) void {
+    var out = vertex;
+    out.pos = mtx.Vector.init(out.pos[0], out.pos[1], out.pos[2]).transform3(currentMatrix()).v;
+    vertex_buffer.appendAssumeCapacity(out);
+}
+
 pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
     const w = t.size[0];
     const h = t.size[1];
@@ -116,6 +138,90 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
 
     verts[4] = verts[2];
     verts[5] = verts[1];
+}
+
+pub fn drawPolygon2D(polygon: *const collision.Polygon, color: [4]u8) void {
+    const spr = Sprite.white.spr;
+
+    // Draw sum quads
+    const p0 = Vertex{
+        .pos = transformVector(polygon.points[0]),
+        .uv = .{ spr.u0, spr.v0 },
+        .color_back = color,
+        .color_fore = color,
+    };
+    var p1 = Vertex{
+        .pos = transformVector(polygon.points[1]),
+        .uv = .{ spr.u0, spr.v0 },
+        .color_back = color,
+        .color_fore = color,
+    };
+
+    for (polygon.points[2..]) |point| {
+        const verts = vertex_buffer.addManyAsSliceAssumeCapacity(3);
+
+        verts[0] = p0;
+        verts[1] = p1;
+        verts[2] = .{
+            .pos = transformVector(point),
+            .uv = .{ spr.u0, spr.v0 },
+            .color_back = color,
+            .color_fore = color,
+        };
+
+        p1 = verts[2];
+    }
+}
+
+pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
+    const wall = Sprite.wall;
+    const spr = wall.spr;
+
+    // Draw walls first
+    const last_point = polygon.points[polygon.points.len - 1];
+    var vert_00 = Vertex{
+        .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_max }),
+        .uv = .{ spr.u0, spr.v0 },
+        .color_back = wall.colors.back,
+        .color_fore = wall.colors.fore,
+    };
+    var vert_01 = Vertex{
+        .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_min }),
+        .uv = .{ spr.u0, spr.v1 },
+        .color_back = wall.colors.back,
+        .color_fore = wall.colors.fore,
+    };
+
+    for (polygon.points) |point| {
+        vert_00.uv[0] = spr.u0;
+        vert_01.uv[0] = spr.u0;
+
+        const vert_10 = Vertex{
+            .pos = transformVector([3]f32{ point[0], point[1], polygon.z_max }),
+            .uv = .{ spr.u1, spr.v0 },
+            .color_back = wall.colors.back,
+            .color_fore = wall.colors.fore,
+        };
+        const vert_11 = Vertex{
+            .pos = transformVector([3]f32{ point[0], point[1], polygon.z_min }),
+            .uv = .{ spr.u1, spr.v1 },
+            .color_back = wall.colors.back,
+            .color_fore = wall.colors.fore,
+        };
+
+        // Push verts
+        const verts = vertex_buffer.addManyAsSliceAssumeCapacity(6);
+        verts[0] = vert_00;
+        verts[1] = vert_10;
+        verts[2] = vert_01;
+        verts[3] = vert_11;
+        verts[4] = vert_01;
+        verts[5] = vert_10;
+
+        // Save for next iteration
+        vert_00 = vert_10;
+        vert_01 = vert_11;
+    }
 }
 
 fn currentMatrix() *const mtx.Matrix {
