@@ -137,10 +137,11 @@ pub const Frame = struct {
 
 pub const Chunk = struct {
     pub const Kind = enum(u16) {
-        palette = 0x0004,
+        palette_rgb888 = 0x0004,
         layer = 0x2004,
         cel = 0x2005,
         color_profile = 0x2007,
+        palette_rgba8888 = 0x2019,
     };
 
     pub const Header = packed struct {
@@ -311,7 +312,7 @@ pub fn parse(src: []const u8, gpa: std.mem.Allocator) !Ase {
                 // Don't care
                 .color_profile => _ = try r.take(chunk_header.num_bytes - 6),
 
-                .palette => {
+                .palette_rgb888 => {
                     const colors = try gpa.alloc([4]u8, 256);
                     errdefer gpa.free(colors);
                     @memset(colors, .{ 0, 0, 0, 0 });
@@ -332,6 +333,29 @@ pub fn parse(src: []const u8, gpa: std.mem.Allocator) !Ase {
                                 if (ase_header.transparent_color == color_index) 0 else 255,
                             };
                             color_index += 1;
+                        }
+                    }
+
+                    palette = colors;
+                },
+
+                .palette_rgba8888 => {
+                    const num_colors = try r.takeInt(u32, .little);
+                    const color_first = try r.takeInt(u32, .little);
+                    const color_last = try r.takeInt(u32, .little);
+
+                    try r.discardAll(8);
+
+                    const colors = try gpa.alloc([4]u8, num_colors);
+                    errdefer gpa.free(colors);
+
+                    for (color_first..color_last + 1) |i| {
+                        const color_flags = try r.takeInt(u16, .little);
+                        colors[i] = (try r.takeArray(4)).*;
+
+                        if (color_flags & 1 == 1) {
+                            const name_len = try r.takeInt(u16, .little);
+                            try r.discardAll(name_len);
                         }
                     }
 
