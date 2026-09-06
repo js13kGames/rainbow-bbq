@@ -234,8 +234,12 @@ pub const Vector = struct {
         return .{ .v = .{ x, y, z, 1 } };
     }
 
+    pub inline fn to2(this: Vector) Vector {
+        return .init(this.v[0], this.v[1], 0);
+    }
+
     pub inline fn to3(this: Vector) Vec3 {
-        return .{ this.v[0], this.v[1], this.v[2] };
+        return .init(this.v[0], this.v[1], this.v[2]);
     }
 
     /// Multiply by a matrix as a 3D vector.
@@ -291,10 +295,11 @@ pub const Vector = struct {
     }
 
     pub inline fn add2(this: Vector, other: Vector) Vector {
-        var r = this.v + other.v;
-        r[2] = this.v[2];
-        r[3] = 1;
-        return .{ .v = r };
+        return .init(
+            this.v[0] + other.v[0],
+            this.v[1] + other.v[1],
+            this.v[2],
+        );
     }
 
     pub inline fn add3(this: Vector, other: Vector) Vector {
@@ -317,7 +322,11 @@ pub const Vector = struct {
         return .{ .v = this.v - other.v };
     }
 
-    pub inline fn mulScalar(this: Vector, other: f32) Vector {
+    pub inline fn mulScalar2(this: Vector, other: f32) Vector {
+        return .{ .v = this.v * @as(Vec4, .{ other, other, 1, 1 }) };
+    }
+
+    pub inline fn mulScalar4(this: Vector, other: f32) Vector {
         return .{ .v = this.v * @as(Vec4, @splat(other)) };
     }
 

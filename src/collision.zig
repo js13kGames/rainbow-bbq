@@ -76,6 +76,48 @@ const CollisionResult = struct {
     floor: f32 = 0,
 };
 
+pub const PhysicsEntity = struct {
+    shape: Polygon,
+    position: mtx.Vector,
+    speed: mtx.Vector,
+
+    pub fn moveAndCollide(this: *PhysicsEntity) void {
+        // First update position X/Y
+        this.position = this.position.add2(this.speed);
+        this.shape.move(this.speed.to2());
+
+        // Eject self from walls
+        while (collideWithWorld(&this.shape)) |eject| {
+            this.shape.move(.init(
+                eject.pen_dir[0] * (eject.pen_length + 0.001),
+                eject.pen_dir[1] * (eject.pen_length + 0.001),
+                0,
+            ));
+
+            // Update speed
+            const angle = js.atan2(eject.pen_dir[0], eject.pen_dir[1]);
+            var rot = this.speed.rotateZ(angle);
+            rot.v[1] = 0;
+            this.speed = rot.rotateZ(-angle);
+        }
+
+        // Align position with shape position
+        this.position.v[0] = this.shape.middle[0];
+        this.position.v[1] = this.shape.middle[1];
+
+        // Cool, now do Z
+        this.position.v[2] += this.speed.v[2];
+        this.shape.move(.init(0, 0, this.speed.v[2]));
+        while (collideWithWorld(&this.shape)) |eject| {
+            // Assume there will be no ceilings
+            const diff = eject.floor - this.shape.z_min;
+            this.shape.move(.init(0, 0, diff + 0.001));
+            this.position.v[2] = this.shape.z_min;
+            this.speed.v[2] = 0;
+        }
+    }
+};
+
 fn projectPolygon(poly: *const Polygon, axis_proj: mtx.Vec2) PolygonProjection {
     var proj = PolygonProjection{};
     for (poly.points) |point| {
@@ -177,9 +219,11 @@ const polys = [_]PolyDescriptor{
             .{ 75 * 5, 45 * 5 },
         },
     },
+
+    // Floor
     .{
         .z_min = -64,
-        .z_max = 0,
+        .z_max = -0.001,
         .points = &[_]mtx.Vec2{
             .{ 512, 512 },
             .{ -512, 512 },
