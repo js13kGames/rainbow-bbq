@@ -35,19 +35,18 @@ export fn a() void {
     gbcompress.decompress(compressed, texture_data) catch unreachable;
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
-    player.init(.init(0, 0, 0));
+    Player.player.init(.init(0, 0, 1));
     collision.initWorld();
 }
 
 var frame: f32 = 0;
-var player: Player = undefined;
 
 /// This is the main entrypoint
 export fn b() void {
     frame += 1.0 / 60.0;
     js.input.update();
 
-    player.update();
+    Player.player.update();
 
     // Render main game world
     {
@@ -57,11 +56,11 @@ export fn b() void {
 
         // Draw floor
         render.drawQuad(Sprite.floor.spr, .fromAtlas(Sprite.floor, .{
-            .scale = .{ 10, 10 },
+            .scale = .{ 16, 16 },
             .rot = .{ -std.math.pi / 2.0, 0, 0 },
         }));
 
-        player.draw();
+        Player.player.draw();
 
         for (&collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);

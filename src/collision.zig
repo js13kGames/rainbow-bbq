@@ -1,3 +1,5 @@
+//! File responsible for collisions and physics.
+//!
 //! Sources:
 //! https://timallanwheeler.com/blog/2024/08/01/2d-collision-detection-and-resolution/
 //! https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_PolygonCollisions1.cpp
@@ -6,6 +8,8 @@ const std = @import("std");
 
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
+
+pub const gravity: f32 = 0.115;
 
 /// Convex polygon.
 /// Concave polygons will not work.
@@ -69,6 +73,7 @@ const PolygonProjection = struct {
 const CollisionResult = struct {
     pen_length: f32 = std.math.inf(f32),
     pen_dir: mtx.Vec2 = .{ std.math.nan(f32), std.math.nan(f32) },
+    floor: f32 = 0,
 };
 
 fn projectPolygon(poly: *const Polygon, axis_proj: mtx.Vec2) PolygonProjection {
@@ -111,13 +116,18 @@ fn shapeOverlapSATInner(poly_1: *const Polygon, poly_2: *const Polygon) ?Collisi
         if (penetration_len < result.pen_length) {
             result.pen_length = penetration_len;
             result.pen_dir = .{ axis_proj[0] / nlen, axis_proj[1] / nlen };
+            result.floor = @min(
+                poly_1.z_max,
+                poly_2.z_max,
+            );
         }
     }
 
     return result;
 }
 
-pub fn shapeOverlapSAT(a: *Polygon, b: *Polygon) ?CollisionResult {
+pub fn shapeOverlapSAT(a: *const Polygon, b: *const Polygon) ?CollisionResult {
+    if (a.z_min > b.z_max or a.z_max < b.z_min) return null;
     const result_a = shapeOverlapSATInner(a, b) orelse return null;
     const result_b = shapeOverlapSATInner(b, a) orelse return null;
 
@@ -131,6 +141,7 @@ pub fn shapeOverlapSAT(a: *Polygon, b: *Polygon) ?CollisionResult {
     // Ok, now check the thing
     return if (mtx.dot2D(between_vec, shortest.pen_dir) > 0) shortest else .{
         .pen_length = shortest.pen_length,
+        .floor = shortest.floor,
         .pen_dir = .{
             -shortest.pen_dir[0],
             -shortest.pen_dir[1],
@@ -164,6 +175,58 @@ const polys = [_]PolyDescriptor{
             .{ 60 * 5, 40 * 5 },
             .{ 70 * 5, 30 * 5 },
             .{ 75 * 5, 45 * 5 },
+        },
+    },
+    .{
+        .z_min = -64,
+        .z_max = 0,
+        .points = &[_]mtx.Vec2{
+            .{ 512, 512 },
+            .{ -512, 512 },
+            .{ -512, -512 },
+            .{ 512, -512 },
+        },
+    },
+
+    // Surrounding walls
+    .{
+        .z_min = 0,
+        .z_max = 128,
+        .points = &[_]mtx.Vec2{
+            .{ 512, 512 },
+            .{ 512, -512 },
+            .{ 1024, -512 },
+            .{ 1024, 512 },
+        },
+    },
+    .{
+        .z_min = 0,
+        .z_max = 128,
+        .points = &[_]mtx.Vec2{
+            .{ -512, 512 },
+            .{ -512, -512 },
+            .{ -1024, -512 },
+            .{ -1024, 512 },
+        },
+    },
+    .{
+        .z_min = 0,
+        .z_max = 128,
+        .points = &[_]mtx.Vec2{
+            .{ 512, 512 },
+            .{ -512, 512 },
+            .{ -512, 1024 },
+            .{ 512, 1024 },
+        },
+    },
+    .{
+        .z_min = 0,
+        .z_max = 128,
+        .points = &[_]mtx.Vec2{
+            .{ 512, -512 },
+            .{ -512, -512 },
+            .{ -512, -1024 },
+            .{ 512, -1024 },
         },
     },
 };
@@ -201,4 +264,12 @@ pub fn collideWithWorld(this: *Polygon) ?CollisionResult {
     }
 
     return null;
+}
+
+pub fn isOnFloor(a: *const Polygon) bool {
+    var shape_copy = a.*;
+    shape_copy.z_min -= 1;
+    shape_copy.z_max -= 1;
+
+    return collideWithWorld(&shape_copy) != null;
 }

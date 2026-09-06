@@ -9,22 +9,26 @@ const js = @import("js.zig");
 const collision = @import("collision.zig");
 
 position: mtx.Vector,
-speed: mtx.Vector,
+speed_xy: mtx.Vector,
+speed_z: f32,
 
 points: [8]mtx.Vec2 = undefined,
 shape: collision.Polygon = undefined,
 
+/// Singleton instance
+pub var player: Player = undefined;
+
 const move_accel: f32 = 0.035;
-const max_speed = 1.5;
+const max_speed = 1.6;
 
 const player_width = 7;
 const player_height = 16;
 
 pub fn init(this: *Player, pos: mtx.Vector) void {
     this.position = pos;
-    this.speed = .init(0, 0, 0);
+    this.speed_xy = .init(0, 0, 0);
     this.shape.points = &this.points;
-    this.shape.buildCircle(pos.v[0], pos.v[1], pos.v[2], player_height, player_width);
+    this.shape.buildCircle(pos.v[0], pos.v[1], pos.v[2], player_height / 2.0, player_width);
 }
 
 pub fn update(this: *Player) void {
@@ -33,19 +37,24 @@ pub fn update(this: *Player) void {
     const added_speed = mtx.Vector.init(0, move_accel, 0).rotateZ(target_direction);
 
     // Add to current speed
-    this.speed = this.speed.add4(added_speed);
+    this.speed_xy = this.speed_xy.add4(added_speed);
 
     // Cap speed
-    const speed_var = this.speed.length();
+    const speed_var = this.speed_xy.length3();
     if (speed_var > max_speed) {
-        const speed_direction = this.speed.normalize3();
-        this.speed = speed_direction.mulScalar(max_speed);
+        const speed_direction = this.speed_xy.normalize3();
+        this.speed_xy = speed_direction.mulScalar(max_speed);
     }
 
-    // Ok, now update position
-    if (!js.input.keys[' '].isHeld()) {
-        this.position = this.position.add4(this.speed);
-        this.shape.move(this.speed);
+    // Move up and down (test)
+    this.speed_z -= collision.gravity; // Gravity
+    if (js.input.keys[' '].isHeld() and collision.isOnFloor(&this.shape)) {
+        this.speed_z = 3;
+    }
+
+    // Ok, now update position X/Y
+    this.position = this.position.add2(this.speed_xy);
+    this.shape.move(this.speed_xy);
 
         while (collision.collideWithWorld(&this.shape)) |eject| {
             this.shape.move(.init(
@@ -55,13 +64,22 @@ pub fn update(this: *Player) void {
             ));
 
             const angle = js.atan2(eject.pen_dir[0], eject.pen_dir[1]);
-            var rot = this.speed.rotateZ(angle);
+        var rot = this.speed_xy.rotateZ(angle);
             rot.v[1] = 0;
-            this.speed = rot.rotateZ(-angle);
+        this.speed_xy = rot.rotateZ(-angle);
         }
 
         this.position.v[0] = this.shape.middle[0];
         this.position.v[1] = this.shape.middle[1];
+
+    // Cool, now do Z
+    this.position.v[2] += this.speed_z;
+    this.shape.move(.init(0, 0, this.speed_z));
+    while (collision.collideWithWorld(&this.shape)) |eject| {
+        const diff = eject.floor - this.shape.z_min;
+        this.shape.move(.init(0, 0, diff + 0.001));
+        this.position.v[2] = this.shape.z_min;
+        this.speed_z = 0;
     }
 
     // Move camera

@@ -31,8 +31,8 @@ pub const CameraPerspective = struct {
     yaw_rad: f32 = 0, // -(std.math.pi - 0.001),
 
     fov_rad: f32 = 60.0 * (std.math.pi / 180.0),
-    z_near: f32 = 0.1,
-    z_far: f32 = 1000,
+    z_near: f32 = 1,
+    z_far: f32 = 10000,
 
     pub fn getLookDirectionVector(this: CameraPerspective) Vector {
         return Vector.init(0, 1, 0)

@@ -259,10 +259,26 @@ pub const Vector = struct {
         return .{ .v = mtx.m[0] * x + mtx.m[1] * y + mtx.m[2] * z + mtx.m[3] * w };
     }
 
-    pub fn length(this: Vector) f32 {
+    pub fn length2(this: Vector) f32 {
+        const sqr = this.v * this.v;
+        const len_sqr = sqr[0] + sqr[1];
+        return @sqrt(len_sqr);
+    }
+
+    pub fn length3(this: Vector) f32 {
         const sqr = this.v * this.v;
         const len_sqr = sqr[0] + sqr[1] + sqr[2];
         return @sqrt(len_sqr);
+    }
+
+    pub fn normalize2(this: Vector) Vector {
+        const sqr = this.v * this.v;
+        const len_sqr = sqr[0] + sqr[1];
+        const len_inv: f32 = 1.0 / @sqrt(len_sqr);
+        var res = this.v * @as(Vec4, @splat(len_inv));
+        res[2] = this.v[2];
+        res[3] = 1;
+        return .{ .v = res };
     }
 
     pub fn normalize3(this: Vector) Vector {
@@ -272,6 +288,13 @@ pub const Vector = struct {
         var res = this.v * @as(Vec4, @splat(len_inv));
         res[3] = 1;
         return .{ .v = res };
+    }
+
+    pub inline fn add2(this: Vector, other: Vector) Vector {
+        var r = this.v + other.v;
+        r[2] = this.v[2];
+        r[3] = 1;
+        return .{ .v = r };
     }
 
     pub inline fn add3(this: Vector, other: Vector) Vector {

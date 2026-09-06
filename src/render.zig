@@ -15,8 +15,8 @@ var vertex_storage: [0x1000 * 6]js.Vertex = undefined;
 pub var vertex_buffer: std.ArrayList(js.Vertex) = .initBuffer(&vertex_storage);
 
 pub var camera: Camera = Camera{
-    .z_near = 0.1,
-    .z_far = 1000,
+    .z_near = 1,
+    .z_far = std.math.inf(f32),
     .pitch_rad = -0.7,
     .position = .{ .v = .{ 20, -20, 40, 0 } },
 };
