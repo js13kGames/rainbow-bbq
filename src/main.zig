@@ -7,6 +7,7 @@ const mtx = @import("mtx.zig");
 const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
 const Player = @import("Player.zig");
+const Enemy = @import("Enemy.zig");
 const collision = @import("collision.zig");
 
 pub const std_options = std.Options{
@@ -37,6 +38,9 @@ export fn a() void {
 
     Player.player.init(.init(0, 0, 1));
     collision.initWorld();
+
+    Enemy.initAll();
+    _ = Enemy.spawn(.init(100, 100, 0), .red);
 }
 
 var frame: f32 = 0;
@@ -64,6 +68,11 @@ export fn b() void {
 
         for (&collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);
+        }
+
+        for (&Enemy.enemies) |*enemy| {
+            enemy.update();
+            enemy.draw();
         }
 
         render.flush();

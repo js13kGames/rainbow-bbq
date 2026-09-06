@@ -116,6 +116,14 @@ pub const PhysicsEntity = struct {
             this.speed.v[2] = 0;
         }
     }
+
+    pub fn isGrounded(this: *const PhysicsEntity) bool {
+        return this.speed.v[2] <= 0 and isOnFloor(&this.shape);
+    }
+
+    pub inline fn doGravity(this: *PhysicsEntity) void {
+        this.speed.v[2] -= gravity;
+    }
 };
 
 fn projectPolygon(poly: *const Polygon, axis_proj: mtx.Vec2) PolygonProjection {

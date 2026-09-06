@@ -140,6 +140,23 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
     verts[5] = verts[1];
 }
 
+pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
+    frame: usize = 0,
+    pos: mtx.Vector = .init(0, 0, 0),
+    angle: f32 = 0,
+    scale: [2]f32 = .{ 1, 1 },
+    origin: [2]f32 = .{ 0.5, 0 },
+}) void {
+    drawQuad(sprite.spr.frame(t.frame), .{
+        .pos = .{ t.pos.v[0], t.pos.v[1], t.pos.v[2] },
+        .size = .{ @as(f32, sprite.w) * t.scale[0], @as(f32, sprite.h) * t.scale[1] },
+        .color_back = sprite.frame_colors[t.frame].back,
+        .color_fore = sprite.frame_colors[t.frame].fore,
+        .origin = t.origin,
+        .rot = .{ 0, t.angle, camera.yaw_rad },
+    });
+}
+
 pub fn drawPolygon2D(polygon: *const collision.Polygon, color: [4]u8) void {
     const spr = Sprite.white.spr;
 
