@@ -5,6 +5,7 @@
 const std = @import("std");
 
 const mtx = @import("mtx.zig");
+const js = @import("js.zig");
 
 /// Convex polygon.
 /// Concave polygons will not work.
@@ -13,16 +14,14 @@ pub const Polygon = struct {
     z_min: f32,
     z_max: f32,
 
-    middle: ?mtx.Vec2 = null,
+    middle: mtx.Vec2 = undefined,
 
     pub fn move(this: *Polygon, delta: mtx.Vector) void {
         this.z_min += delta.v[2];
         this.z_max += delta.v[2];
 
-        if (this.middle) |*middle| {
-            middle[0] += delta.v[0];
-            middle[1] += delta.v[1];
-        }
+        this.middle[0] += delta.v[0];
+        this.middle[1] += delta.v[1];
 
         for (0..this.points.len) |i| {
             this.points[i][0] += delta.v[0];
@@ -30,9 +29,7 @@ pub const Polygon = struct {
         }
     }
 
-    pub fn getMiddle(this: *Polygon) mtx.Vec2 {
-        if (this.middle) |middle| return middle;
-
+    pub fn calculateMiddle(this: *Polygon) void {
         var xmin = std.math.inf(f32);
         var ymin = std.math.inf(f32);
         var xmax = -std.math.inf(f32);
@@ -45,9 +42,22 @@ pub const Polygon = struct {
             ymax = @max(ymax, point[1]);
         }
 
-        const middle = .{ (xmin + xmax) / 2.0, (ymin + ymax) / 2.0 };
-        this.middle = middle;
-        return middle;
+        this.middle = .{ (xmin + xmax) / 2.0, (ymin + ymax) / 2.0 };
+    }
+
+    pub fn buildCircle(this: *Polygon, x: f32, y: f32, z: f32, height: f32, radius: f32) void {
+        for (this.points, 0..) |*point, i| {
+            const angle = (std.math.tau / 8.0) * @as(f32, @floatFromInt(i));
+
+            point.* = .{
+                x + js.cos(angle) * radius,
+                y + js.sin(angle) * radius,
+            };
+        }
+
+        this.z_min = z;
+        this.z_max = z + height;
+        this.middle = .{ x, y };
     }
 };
 
@@ -113,12 +123,9 @@ pub fn shapeOverlapSAT(a: *Polygon, b: *Polygon) ?CollisionResult {
 
     const shortest = if (result_a.pen_length <= result_b.pen_length) result_a else result_b;
 
-    const mid_a = a.getMiddle();
-    const mid_b = b.getMiddle();
-
     const between_vec = mtx.Vec2{
-        mid_b[0] - mid_a[0],
-        mid_b[1] - mid_a[1],
+        b.middle[0] - a.middle[0],
+        b.middle[1] - a.middle[1],
     };
 
     // Ok, now check the thing

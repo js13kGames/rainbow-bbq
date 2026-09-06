@@ -34,23 +34,20 @@ export fn a() void {
     const compressed = @embedFile("atlas.bin");
     gbcompress.decompress(compressed, texture_data) catch unreachable;
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
+
+    player.init(.init(0, 0, 0));
+    for (collision.world_walls) |*wall| {
+        wall.calculateMiddle();
+    }
 }
 
 var frame: f32 = 0;
-var player: Player = .{};
+var player: Player = undefined;
 
 /// This is the main entrypoint
 export fn b() void {
     frame += 1.0 / 60.0;
     js.input.update();
-
-    const sprite = Sprite.simple;
-    var transform = render.QuadDescriptor.fromAtlas(Sprite.simple, .{
-        .origin = .{ 0.5, 0.5 },
-        .pos = .{ 30, 30, 1 },
-        .rot = .{ std.math.pi / 2.0, 0, frame },
-        .scale = .{ 4, 4 },
-    });
 
     player.update();
 
@@ -71,31 +68,6 @@ export fn b() void {
         for (collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);
         }
-
-        // Draw test billboard
-        render.drawQuad(sprite.spr, .{
-            .size = .{ 16 + js.sin(frame) * 2, 16 },
-            .pos = .{ 0, 0, 0 },
-        });
-
-        render.drawQuad(sprite.spr, .{
-            .size = .{ 16, 16 },
-            .pos = .{ 32, 0, 0 },
-            .rot = .{ 0, frame, 0 },
-        });
-
-        // Draw BEEG sprite
-        render.drawQuad(sprite.spr, transform);
-
-        render.pushMatrix(&mtx.Matrix.from2DParams(30, 30, 4, 4, frame));
-        defer render.popMatrix();
-
-        // Draw orbiting sprite
-        render.drawQuad(sprite.spr, transform.base(.{
-            .size = .{ 8, 8 },
-            .pos = .{ -20, -20, 0 },
-            .rot = .{ std.math.pi / 2.0, 0, 0 },
-        }));
 
         render.flush();
     }

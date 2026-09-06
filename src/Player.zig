@@ -8,11 +8,24 @@ const mtx = @import("mtx.zig");
 const js = @import("js.zig");
 const collision = @import("collision.zig");
 
-position: mtx.Vector = .init(0, 0, @as(f32, Sprite.unicorn.h) / 2.0),
-speed: mtx.Vector = .init(0, 0, 0),
+position: mtx.Vector,
+speed: mtx.Vector,
+
+points: [8]mtx.Vec2 = undefined,
+shape: collision.Polygon = undefined,
 
 const move_accel: f32 = 0.035;
 const max_speed = 1.5;
+
+const player_width = 7;
+const player_height = 16;
+
+pub fn init(this: *Player, pos: mtx.Vector) void {
+    this.position = pos;
+    this.speed = .init(0, 0, 0);
+    this.shape.points = &this.points;
+    this.shape.buildCircle(pos.v[0], pos.v[1], pos.v[2], player_height, player_width);
+}
 
 pub fn update(this: *Player) void {
     // Build movement vector
@@ -32,37 +45,23 @@ pub fn update(this: *Player) void {
     // Ok, now update position
     if (!js.input.keys[' '].isHeld()) {
         this.position = this.position.add4(this.speed);
+        this.shape.move(this.speed);
 
-        const width = 7;
-        const height = 16;
-
-        var points: [8]mtx.Vec2 = undefined;
-        for (&points, 0..) |*point, i| {
-            const angle = if (i == 0) 0.0 else std.math.tau / @as(f32, @floatFromInt(i));
-
-            point.* = .{
-                this.position.v[0] + js.cos(angle) * width,
-                this.position.v[1] + js.sin(angle) * width,
-            };
-        }
-
-        var shape = collision.Polygon{
-            .points = &points,
-            .z_min = 0,
-            .z_max = height,
-            .middle = .{ this.position.v[0], this.position.v[1] },
-        };
-
-        while (collision.collideWithWorld(&shape)) |eject| {
-            shape.move(.init(
+        while (collision.collideWithWorld(&this.shape)) |eject| {
+            this.shape.move(.init(
                 eject.pen_dir[0] * (eject.pen_length + 0.001),
                 eject.pen_dir[1] * (eject.pen_length + 0.001),
                 0,
             ));
+
+            const angle = js.atan2(eject.pen_dir[0], eject.pen_dir[1]);
+            var rot = this.speed.rotateZ(angle);
+            rot.v[1] = 0;
+            this.speed = rot.rotateZ(-angle);
         }
 
-        this.position.v[0] = shape.middle.?[0];
-        this.position.v[1] = shape.middle.?[1];
+        this.position.v[0] = this.shape.middle[0];
+        this.position.v[1] = this.shape.middle[1];
     }
 
     // Move camera
@@ -83,5 +82,6 @@ pub fn draw(this: *const Player) void {
     render.drawQuad(sprite.spr, .fromAtlas(sprite, .{
         .pos = .{ this.position.v[0], this.position.v[1], this.position.v[2] },
         .rot = .{ 0, 0, render.camera.yaw_rad },
+        .origin = .{ 0.5, 0 },
     }));
 }
