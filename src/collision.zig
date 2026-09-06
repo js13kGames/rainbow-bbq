@@ -138,32 +138,63 @@ pub fn shapeOverlapSAT(a: *Polygon, b: *Polygon) ?CollisionResult {
     };
 }
 
-pub var world_walls: []Polygon = @constCast(&[_]Polygon{
+const PolyDescriptor = struct {
+    z_min: f32,
+    z_max: f32,
+    points: []const mtx.Vec2,
+};
+
+const polys = [_]PolyDescriptor{
     .{
         .z_min = 0,
         .z_max = 24,
-        .points = @constCast(&[_]mtx.Vec2{
+        .points = &[_]mtx.Vec2{
             .{ 40 * 5, 40 * 5 },
             .{ 50 * 5, 40 * 5 },
             .{ 60 * 5, 50 * 5 },
             .{ 65 * 5, 70 * 5 },
             .{ 40 * 5, 80 * 5 },
             .{ 20 * 5, 60 * 5 },
-        }),
+        },
     },
     .{
         .z_min = 0,
         .z_max = 24,
-        .points = @constCast(&[_]mtx.Vec2{
+        .points = &[_]mtx.Vec2{
             .{ 60 * 5, 40 * 5 },
             .{ 70 * 5, 30 * 5 },
             .{ 75 * 5, 45 * 5 },
-        }),
+        },
     },
-});
+};
+
+pub fn initWorld() void {
+    const num_points = comptime num_points: {
+        var num_points: usize = 0;
+        for (&polys) |*poly| {
+            num_points += poly.points.len;
+        }
+        break :num_points num_points;
+    };
+
+    const mem = js.staticAlloc(mtx.Vec2, num_points);
+    var p: usize = 0;
+    for (&polys, &world_walls) |poly, *wall| {
+        const points = mem[p .. p + poly.points.len];
+        p += poly.points.len;
+
+        @memcpy(points, poly.points);
+        wall.z_min = poly.z_min;
+        wall.z_max = poly.z_max;
+        wall.points = points;
+        wall.calculateMiddle();
+    }
+}
+
+pub var world_walls: [polys.len]Polygon = undefined;
 
 pub fn collideWithWorld(this: *Polygon) ?CollisionResult {
-    for (world_walls) |*wall| {
+    for (&world_walls) |*wall| {
         if (shapeOverlapSAT(wall, this)) |result| {
             return result;
         }

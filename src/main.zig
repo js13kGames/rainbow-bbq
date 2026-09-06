@@ -36,9 +36,7 @@ export fn a() void {
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
     player.init(.init(0, 0, 0));
-    for (collision.world_walls) |*wall| {
-        wall.calculateMiddle();
-    }
+    collision.initWorld();
 }
 
 var frame: f32 = 0;
@@ -65,7 +63,7 @@ export fn b() void {
 
         player.draw();
 
-        for (collision.world_walls) |*wall| {
+        for (&collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);
         }
 
