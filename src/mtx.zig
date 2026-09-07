@@ -354,6 +354,11 @@ pub const Vector = struct {
         );
     }
 
+    pub inline fn dot2(this: Vector, other: Vector) f32 {
+        const r = this.v * other.v;
+        return r[0] + r[1];
+    }
+
     pub inline fn dot3(this: Vector, other: Vector) f32 {
         const r = this.v * other.v;
         return r[0] + r[1] + r[2];

@@ -5,7 +5,6 @@ const Sprite = @import("Sprite");
 
 const Entity = @import("../Entity.zig");
 const render = @import("../render.zig");
-const js = @import("../js.zig");
 const mtx = @import("../mtx.zig");
 
 const State = enum {
@@ -54,13 +53,8 @@ pub fn update(entity: *Entity) void {
                 this.state = .jump;
 
                 // Get direction to player
-                const player = Entity.Player.player;
-                this.jump_dir = js.atan2(
-                    player.body.position.v[1] - entity.body.position.v[1],
-                    player.body.position.v[0] - entity.body.position.v[0],
-                );
-
-                entity.body.speed = mtx.Vector.init(2, 0, 2.4).rotateZ(this.jump_dir);
+                this.jump_dir = entity.directionTo(Entity.Player.player);
+                entity.body.speed = mtx.Vector.init(2, 0, 2.6).rotateZ(this.jump_dir);
             }
         },
 
@@ -68,7 +62,6 @@ pub fn update(entity: *Entity) void {
             const temp = mtx.Vector.init(2, 0, 0).rotateZ(this.jump_dir);
             entity.body.speed.v[0] = temp.v[0];
             entity.body.speed.v[1] = temp.v[1];
-            entity.body.doGravity();
 
             // Just keep going until we land
             if (entity.body.isGrounded()) {
@@ -81,6 +74,7 @@ pub fn update(entity: *Entity) void {
     }
 
     // Update physics
+    entity.body.doGravity();
     entity.body.moveAndCollide();
 }
 

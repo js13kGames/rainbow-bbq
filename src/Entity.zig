@@ -2,9 +2,12 @@ pub const Entity = @This();
 
 pub const Player = @import("entity/Player.zig");
 pub const EnemyRed = @import("entity/EnemyRed.zig");
+pub const EnemyYellow = @import("entity/EnemyYellow.zig");
+pub const AttackYellow = @import("entity/AttackYellow.zig");
 
 const collision = @import("collision.zig");
 const mtx = @import("mtx.zig");
+const js = @import("js.zig");
 
 pub const EnemyKind = enum {
     red,
@@ -41,6 +44,9 @@ inner: union {
     none: void,
     player: Player,
     enemy_red: EnemyRed,
+    enemy_yellow: EnemyYellow,
+
+    attack_yellow: AttackYellow,
 },
 
 pub var all: [1024]Entity = undefined;
@@ -67,4 +73,15 @@ pub fn findFree() ?*Entity {
     }
 
     return null;
+}
+
+pub fn directionTo(this: *const Entity, other: *const Entity) f32 {
+    return js.atan2(
+        other.body.position.v[1] - this.body.position.v[1],
+        other.body.position.v[0] - this.body.position.v[0],
+    );
+}
+
+pub fn distanceTo(this: *const Entity, other: *const Entity) f32 {
+    return this.body.position.sub4(other.body.position).length3();
 }
