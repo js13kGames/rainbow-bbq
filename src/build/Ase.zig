@@ -47,23 +47,19 @@ pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
             .compressed_img => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
             else => @panic("bad"),
         };
-        std.debug.assert(cel_x + cel_w <= cw);
-        std.debug.assert(cel_y + cel_h <= ch);
 
-        var i: usize = 0;
-
-        for (0..cel_h) |y| {
-            for (0..cel_w) |x| {
+        for (0..@min(cel_h, ch - cel_y)) |y| {
+            for (0..@min(cel_w, cw - cel_x)) |x| {
                 const src_pixel = switch (this.header.color_depth) {
                     .paletted => blk: {
+                        const i: usize = (y * cel_w) + x;
                         const pix = cel.pixel_data[i];
-                        i += 1;
                         break :blk this.palette[pix];
                     },
 
                     .rgba => blk: {
+                        const i: usize = ((y * cel_w) + x) * 4;
                         const color = cel.pixel_data[i .. i + 4][0..4].*;
-                        i += 4;
                         break :blk color;
                     },
 
