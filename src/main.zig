@@ -6,8 +6,7 @@ const render = @import("render.zig");
 const mtx = @import("mtx.zig");
 const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
-const Player = @import("Player.zig");
-const Enemy = @import("Enemy.zig");
+const Entity = @import("Entity.zig");
 const collision = @import("collision.zig");
 
 pub const std_options = std.Options{
@@ -28,19 +27,20 @@ pub const std_options = std.Options{
 
 /// This is the "initial" function
 export fn a() void {
-    // Upload dummy texture
-    const texture_data = js.staticAlloc(u8, Sprite.atlas_width * Sprite.atlas_height);
+    // Ensure there is always a unit matrix at the bottom of the stack
     render.matrix_stack.appendAssumeCapacity(.{});
 
+    // Decompress and upload texture
+    const texture_data = js.staticAlloc(u8, Sprite.atlas_width * Sprite.atlas_height);
     const compressed = @embedFile("atlas.bin");
     gbcompress.decompress(compressed, texture_data) catch unreachable;
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
-    Player.player.init(.init(0, 0, 1));
     collision.initWorld();
 
-    Enemy.initAll();
-    _ = Enemy.spawn(.init(100, 100, 0), .red);
+    Entity.initAll();
+    Entity.Player.init(Entity.findFree().?, .init(0, 0, 1));
+    Entity.EnemyRed.init(Entity.findFree().?, .init(100, 100, 0));
 }
 
 var frame: f32 = 0;
@@ -50,10 +50,11 @@ export fn b() void {
     frame += 1.0 / 60.0;
     js.input.update();
 
-    Player.player.update();
-
     // Render main game world
     {
+        for (&Entity.all) |*entity| entity.update();
+
+        // Update done, now set camera matrix
         const matrix = render.camera.getMatrix();
         render.pushMatrix(&matrix);
         defer render.popMatrix();
@@ -64,17 +65,15 @@ export fn b() void {
             .rot = .{ -std.math.pi / 2.0, 0, 0 },
         }));
 
-        Player.player.draw();
-
+        // Draw collision polygons
         for (&collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);
         }
 
-        for (&Enemy.enemies) |*enemy| {
-            enemy.update();
-            enemy.draw();
-        }
+        // Render entities
+        for (&Entity.all) |*entity| entity.draw();
 
+        // World pass done
         render.flush();
     }
 

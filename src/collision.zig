@@ -48,21 +48,6 @@ pub const Polygon = struct {
 
         this.middle = .{ (xmin + xmax) / 2.0, (ymin + ymax) / 2.0 };
     }
-
-    pub fn buildCircle(this: *Polygon, x: f32, y: f32, z: f32, height: f32, radius: f32) void {
-        for (this.points, 0..) |*point, i| {
-            const angle = (std.math.tau / 8.0) * @as(f32, @floatFromInt(i));
-
-            point.* = .{
-                x + js.cos(angle) * radius,
-                y + js.sin(angle) * radius,
-            };
-        }
-
-        this.z_min = z;
-        this.z_max = z + height;
-        this.middle = .{ x, y };
-    }
 };
 
 const PolygonProjection = struct {
@@ -79,7 +64,28 @@ const CollisionResult = struct {
 pub const PhysicsEntity = struct {
     shape: Polygon,
     position: mtx.Vector,
-    speed: mtx.Vector,
+    speed: mtx.Vector = .init(0, 0, 0),
+
+    pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) PhysicsEntity {
+        for (points, 0..) |*point, i| {
+            const angle = (std.math.tau / 8.0) * @as(f32, @floatFromInt(i));
+
+            point.* = .{
+                pos.v[0] + js.cos(angle) * radius,
+                pos.v[1] + js.sin(angle) * radius,
+            };
+        }
+
+        return .{
+            .position = pos,
+            .shape = .{
+                .z_min = pos.v[2],
+                .z_max = pos.v[2] + height,
+                .middle = .{ pos.v[0], pos.v[1] },
+                .points = points,
+            },
+        };
+    }
 
     pub fn moveAndCollide(this: *PhysicsEntity) void {
         // First update position X/Y
