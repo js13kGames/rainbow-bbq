@@ -137,7 +137,9 @@ pub const Chunk = struct {
         layer = 0x2004,
         cel = 0x2005,
         color_profile = 0x2007,
+        tags = 0x2018,
         palette_rgba8888 = 0x2019,
+        user_data = 0x2020,
     };
 
     pub const Header = packed struct {
@@ -307,6 +309,40 @@ pub fn parse(src: []const u8, gpa: std.mem.Allocator) !Ase {
             switch (chunk_header.kind) {
                 // Don't care
                 .color_profile => _ = try r.take(chunk_header.num_bytes - 6),
+
+                // Also don't care
+                .tags => {
+                    const num_tags = try r.takeInt(u16, .little);
+                    try r.discardAll(8);
+
+                    for (0..num_tags) |_| {
+                        try r.discardAll(17);
+                        const tag_name_len = try r.takeInt(u16, .little);
+                        try r.discardAll(tag_name_len);
+                    }
+                },
+
+                // Even more don't care
+                .user_data => {
+                    const flags = try r.takeInt(u32, .little);
+
+                    // Has text
+                    if (flags & 1 != 0) {
+                        const tag_name_len = try r.takeInt(u16, .little);
+                        try r.discardAll(tag_name_len);
+                    }
+
+                    // Has color
+                    if (flags & 2 != 0) {
+                        try r.discardAll(4);
+                    }
+
+                    // Has properties
+                    if (flags & 4 != 0) {
+                        const num_bytes = try r.takeInt(u32, .little);
+                        try r.discardAll(num_bytes - 4);
+                    }
+                },
 
                 .palette_rgb888 => {
                     const colors = try gpa.alloc([4]u8, 256);
