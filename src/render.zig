@@ -111,30 +111,27 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
         .multiply(currentMatrix(), &matrix);
 
     var verts = vertex_buffer.addManyAsSliceAssumeCapacity(6);
-    verts[0] = .{
-        .pos = (mtx.Vector{ .v = .{ 0, 0, 0, 1 } }).transform3(&matrix).v,
-        .uv = .{ spr.u0, spr.v1 },
-        .color_back = t.color_back,
-        .color_fore = t.color_fore,
-    };
-    verts[1] = .{
-        .pos = (mtx.Vector{ .v = .{ 1, 0, 0, 1 } }).transform3(&matrix).v,
-        .uv = .{ spr.u1, spr.v1 },
-        .color_back = t.color_back,
-        .color_fore = t.color_fore,
-    };
-    verts[2] = .{
-        .pos = (mtx.Vector{ .v = .{ 0, 0, 1, 1 } }).transform3(&matrix).v,
-        .uv = .{ spr.u0, spr.v0 },
-        .color_back = t.color_back,
-        .color_fore = t.color_fore,
-    };
-    verts[3] = .{
-        .pos = (mtx.Vector{ .v = .{ 1, 0, 1, 1 } }).transform3(&matrix).v,
-        .uv = .{ spr.u1, spr.v0 },
-        .color_back = t.color_back,
-        .color_fore = t.color_fore,
-    };
+
+    const uv_u: [2]f32 = .{ spr.u0, spr.u1 };
+    const uv_v: [2]f32 = .{ spr.v0, spr.v1 };
+
+    for (0..4) |i| {
+        const x = i & 1;
+        const z = i >> 1;
+
+        verts[i] = .{
+            .pos = (mtx.Vector{ .v = .{ @floatFromInt(x), 0, @floatFromInt(z), 1 } }).transform3(&matrix).v,
+            .uv = .{ uv_u[x], uv_v[1 - z] },
+            .color_back = t.color_back,
+            .color_fore = t.color_fore,
+        };
+    }
+
+    if ((w < 0) != (h < 0)) {
+        const tmp = verts[1];
+        verts[1] = verts[2];
+        verts[2] = tmp;
+    }
 
     verts[4] = verts[2];
     verts[5] = verts[1];
@@ -161,32 +158,33 @@ pub fn drawPolygon2D(polygon: *const collision.Polygon, color: [4]u8) void {
     const spr = Sprite.white.spr;
 
     // Draw sum quads
-    const p0 = Vertex{
-        .pos = transformVector(polygon.points[0]),
-        .uv = .{ spr.u0, spr.v0 },
-        .color_back = color,
-        .color_fore = color,
-    };
-    var p1 = Vertex{
-        .pos = transformVector(polygon.points[1]),
-        .uv = .{ spr.u0, spr.v0 },
-        .color_back = color,
-        .color_fore = color,
-    };
+    var p0: Vertex = undefined;
+    var p1: Vertex = undefined;
 
-    for (polygon.points[2..]) |point| {
-        const verts = vertex_buffer.addManyAsSliceAssumeCapacity(3);
-
-        verts[0] = p0;
-        verts[1] = p1;
-        verts[2] = .{
+    for (polygon.points, 0..) |point, i| {
+        const vert = Vertex{
             .pos = transformVector(point),
             .uv = .{ spr.u0, spr.v0 },
             .color_back = color,
             .color_fore = color,
         };
 
-        p1 = verts[2];
+        if (i == 0) {
+            p0 = vert;
+            continue;
+        }
+        if (i == 1) {
+            p1 = vert;
+            continue;
+        }
+
+        const verts = vertex_buffer.addManyAsSliceAssumeCapacity(3);
+
+        verts[0] = p1;
+        verts[1] = p0;
+        verts[2] = vert;
+
+        p1 = vert;
     }
 }
 
@@ -208,6 +206,11 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         .color_back = wall.colors.back,
         .color_fore = wall.colors.fore,
     };
+
+    var x_min = std.math.inf(f32);
+    var x_max = -std.math.inf(f32);
+    var y_min = std.math.inf(f32);
+    var y_max = -std.math.inf(f32);
 
     for (polygon.points) |point| {
         vert_00.uv[0] = spr.u0;
@@ -238,6 +241,49 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         // Save for next iteration
         vert_00 = vert_10;
         vert_01 = vert_11;
+
+        x_min = @min(x_min, point[0]);
+        x_max = @max(x_max, point[0]);
+        y_min = @min(y_min, point[1]);
+        y_max = @max(y_max, point[1]);
+    }
+
+    // Draw top
+
+    const diff_u = spr.u1 - spr.u0;
+    const diff_v = spr.v1 - spr.v0;
+    const diff_x = x_max - x_min;
+    const diff_y = y_max - y_min;
+
+    var p0: Vertex = undefined;
+    var p1: Vertex = undefined;
+
+    for (polygon.points, 0..) |point, i| {
+        const vert = Vertex{
+            .pos = transformVector(mtx.Vec3{ point[0], point[1], polygon.z_max }),
+            .uv = .{
+                spr.u0 + (point[0] - x_min) / diff_x * diff_u,
+                spr.v0 + (point[1] - y_min) / diff_y * diff_v,
+            },
+            .color_back = wall.colors.back,
+            .color_fore = wall.colors.fore,
+        };
+
+        if (i == 0) {
+            p0 = vert;
+            continue;
+        }
+        if (i == 1) {
+            p1 = vert;
+            continue;
+        }
+
+        const verts = vertex_buffer.addManyAsSliceAssumeCapacity(3);
+
+        verts[0] = p1;
+        verts[1] = p0;
+        verts[2] = vert;
+        p1 = verts[2];
     }
 }
 

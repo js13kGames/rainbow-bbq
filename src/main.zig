@@ -59,12 +59,6 @@ export fn b() void {
         render.pushMatrix(&matrix);
         defer render.popMatrix();
 
-        // Draw floor
-        render.drawQuad(Sprite.floor.spr, .fromAtlas(Sprite.floor, .{
-            .scale = .{ 16, 16 },
-            .rot = .{ -std.math.pi / 2.0, 0, 0 },
-        }));
-
         // Draw collision polygons
         for (&collision.world_walls) |*wall| {
             render.drawPolygon3D(wall);

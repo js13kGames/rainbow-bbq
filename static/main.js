@@ -7,9 +7,8 @@
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
-    gl.blendFuncSeparate(
-        gl.SRC_ALPHA,
-        gl.ONE_MINUS_SRC_ALPHA,
+    gl.enable(gl.CULL_FACE);
+    gl.blendFunc(
         gl.SRC_ALPHA,
         gl.ONE_MINUS_SRC_ALPHA,
     );
