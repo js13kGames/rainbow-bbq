@@ -3,6 +3,7 @@ pub const Entity = @This();
 pub const Player = @import("entity/Player.zig");
 pub const EnemyRed = @import("entity/EnemyRed.zig");
 pub const EnemyYellow = @import("entity/EnemyYellow.zig");
+pub const EnemyGreen = @import("entity/EnemyGreen.zig");
 pub const AttackYellow = @import("entity/AttackYellow.zig");
 
 const collision = @import("collision.zig");
@@ -45,6 +46,7 @@ inner: union {
     player: Player,
     enemy_red: EnemyRed,
     enemy_yellow: EnemyYellow,
+    enemy_green: EnemyGreen,
 
     attack_yellow: AttackYellow,
 },
