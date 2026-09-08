@@ -134,6 +134,13 @@ fn diagnnose(fname_in: []const u8, io: std.Io, gpa: std.mem.Allocator) !void {
         }
     }
 
+    // Sort functions
+    std.sort.insertion(Function, functions, {}, struct {
+        fn inner(_: void, a: Function, b: Function) bool {
+            return a.len > b.len;
+        }
+    }.inner);
+
     // List functions
     for (functions) |function| {
         std.log.debug("  fn '{s}': {} bytes", .{ function.name orelse "", function.len });
