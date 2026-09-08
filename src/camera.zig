@@ -51,7 +51,7 @@ pub const CameraPerspective = struct {
 
         const view_matrix = Matrix.lookAt(
             this.position,
-            this.getLookDirectionVector().add3(this.position),
+            this.getLookDirectionVector().add4(this.position),
             .init(0, 0, 1),
         );
 

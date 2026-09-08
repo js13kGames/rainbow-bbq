@@ -175,7 +175,7 @@ pub const Matrix = struct {
     }
 
     pub fn lookAt(eye: Vector, target: Vector, up: Vector) Matrix {
-        const axis_z = eye.sub3(target).normalize3();
+        const axis_z = eye.sub4(target).normalize3();
         const axis_x = up.cross(axis_z).normalize3();
         const axis_y = axis_z.cross(axis_x).normalize3();
 
