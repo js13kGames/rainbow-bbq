@@ -263,6 +263,10 @@ pub const Vector = struct {
         return .{ .v = mtx.m[0] * x + mtx.m[1] * y + mtx.m[2] * z + mtx.m[3] * w };
     }
 
+    pub fn direction2(this: Vector) f32 {
+        return js.atan2(this.v[1], this.v[0]);
+    }
+
     pub fn length2(this: Vector) f32 {
         const sqr = this.v * this.v;
         const len_sqr = sqr[0] + sqr[1];

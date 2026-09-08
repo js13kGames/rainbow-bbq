@@ -9,7 +9,6 @@ const mtx = @import("../mtx.zig");
 
 points: [8]mtx.Vec2 = undefined,
 time: usize = 0,
-speed_prev: mtx.Vector = .init(0, 0, 0),
 
 const speed_accel: f32 = 0.03;
 const speed_max: f32 = 2.0;
@@ -37,33 +36,12 @@ pub fn update(entity: *Entity) void {
     if (target_distance < gawk_distance) {
         // Gawkin'
         entity.body.speed = entity.body.speed.mulScalar2(0.93);
-        this.speed_prev = .init(0, 0, 0);
     } else {
         this.time +%= 1;
 
-        // That's the direction we want to go
-        const added_speed = mtx.Vector
-            .init(speed_accel, 0, 0)
-            .rotateZ(target_direction);
-
-        // If speed changed, we MUST have collided with a wall!
-        if (this.speed_prev.length2() != 0 and this.speed_prev.length2() > entity.body.speed.length2() and entity.body.isGrounded()) {
-            entity.body.speed.v[2] = 2.6;
-        }
-
-        entity.body.speed = entity.body.speed.add4(added_speed);
-
-        // Cap speed
-        const speed_len = entity.body.speed.length2();
-        if (speed_len > speed_max) {
-            const speed_dir = entity.body.speed.normalize2();
-            entity.body.speed = speed_dir.mulScalar2(speed_max);
-        }
-
-        this.speed_prev = entity.body.speed;
+        entity.moveTowards(target_direction, speed_accel, speed_max, 2.6);
     }
 
-    entity.body.doGravity();
     entity.body.moveAndCollide();
 }
 

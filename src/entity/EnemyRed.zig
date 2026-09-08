@@ -54,14 +54,12 @@ pub fn update(entity: *Entity) void {
 
                 // Get direction to player
                 this.jump_dir = entity.directionTo(Entity.Player.player);
-                entity.body.speed = mtx.Vector.init(2, 0, 2.6).rotateZ(this.jump_dir);
+                entity.body.speed.v[2] = 2.6;
             }
         },
 
         else => {
-            const temp = mtx.Vector.init(2, 0, 0).rotateZ(this.jump_dir);
-            entity.body.speed.v[0] = temp.v[0];
-            entity.body.speed.v[1] = temp.v[1];
+            entity.moveTowards(this.jump_dir, 2, 2, 0);
 
             // Just keep going until we land
             if (entity.body.isGrounded()) {
@@ -74,40 +72,33 @@ pub fn update(entity: *Entity) void {
     }
 
     // Update physics
-    entity.body.doGravity();
     entity.body.moveAndCollide();
 }
 
 pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.enemy_red;
 
+    var frame: usize = 2;
+    var origin_x: f32 = 0.5;
+
     // Draw
     switch (this.state) {
         .idle => {
-            const frame = (this.time >> 4) & 1;
-            render.drawSpriteBillboard(Sprite.enemy_red, .{
-                .pos = entity.body.position,
-                .frame = frame,
-            });
+            frame = (this.time >> 4) & 1;
         },
 
         .squat => {
+            frame = 1;
             const shake = (this.time >> 2) & 1;
-            render.drawSpriteBillboard(Sprite.enemy_red, .{
-                .pos = entity.body.position,
-                .frame = 1,
-                .origin = .{
-                    0.5 + @as(f32, if (shake == 0) 0.06 else -0.06),
-                    0,
-                },
-            });
+            origin_x = 0.5 + @as(f32, if (shake == 0) 0.06 else -0.06);
         },
 
-        else => {
-            render.drawSpriteBillboard(Sprite.enemy_red, .{
-                .pos = entity.body.position,
-                .frame = 2,
-            });
-        },
+        else => {},
     }
+
+    render.drawSpriteBillboard(Sprite.enemy_red, .{
+        .pos = entity.body.position,
+        .frame = frame,
+        .origin = .{ origin_x, 0 },
+    });
 }

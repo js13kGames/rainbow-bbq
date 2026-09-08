@@ -78,12 +78,30 @@ pub fn findFree() ?*Entity {
 }
 
 pub fn directionTo(this: *const Entity, other: *const Entity) f32 {
-    return js.atan2(
-        other.body.position.v[1] - this.body.position.v[1],
-        other.body.position.v[0] - this.body.position.v[0],
-    );
+    return other.body.position.sub4(this.body.position).direction2();
 }
 
 pub fn distanceTo(this: *const Entity, other: *const Entity) f32 {
     return this.body.position.sub4(other.body.position).length3();
+}
+
+pub fn moveTowards(this: *Entity, direction: f32, accel: f32, max_speed: f32, jump_force: f32) void {
+    // That's the direction we want to go
+    const added_speed = mtx.Vector
+        .init(accel, 0, 0)
+        .rotateZ(direction);
+
+    // If speed changed, we MUST have collided with a wall!
+    if (this.body.collided and this.body.isGrounded()) {
+        this.body.speed.v[2] = jump_force;
+    }
+
+    this.body.speed = this.body.speed.add4(added_speed);
+
+    // Cap speed
+    const speed_len = this.body.speed.length2();
+    if (speed_len > max_speed) {
+        const speed_dir = this.body.speed.normalize2();
+        this.body.speed = speed_dir.mulScalar2(max_speed);
+    }
 }

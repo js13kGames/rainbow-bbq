@@ -39,26 +39,13 @@ pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
     _ = this;
 
-    // Build movement vector
-    const target_direction = render.camera.yaw_rad;
-    const added_speed = mtx.Vector.init(0, move_accel, 0).rotateZ(target_direction);
-
-    // Add to current speed
-    entity.body.speed = entity.body.speed.add4(added_speed);
-
-    // Cap speed
-    const speed_var = entity.body.speed.length2();
-    if (speed_var > max_speed) {
-        const speed_direction = entity.body.speed.normalize2();
-        entity.body.speed = speed_direction.mulScalar2(max_speed);
-    }
-
-    // Apply gravity, and also jump
-    entity.body.speed.v[2] -= collision.gravity;
+    // Prepare movement
+    entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, move_accel, max_speed, 0);
     if (js.input.keys[' '].isHeld() and entity.body.speed.v[2] <= 0 and collision.isOnFloor(&entity.body.shape)) {
         entity.body.speed.v[2] = 3;
     }
 
+    // And now go
     entity.body.moveAndCollide();
 
     // Move camera

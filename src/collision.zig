@@ -65,6 +65,7 @@ pub const PhysicsEntity = struct {
     shape: Polygon,
     position: mtx.Vector,
     speed: mtx.Vector = .init(0, 0, 0),
+    collided: bool = false,
 
     pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) PhysicsEntity {
         for (points, 0..) |*point, i| {
@@ -88,12 +89,17 @@ pub const PhysicsEntity = struct {
     }
 
     pub fn moveAndCollide(this: *PhysicsEntity) void {
+        // Apply gravity
+        this.speed.v[2] -= gravity;
+
         // First update position X/Y
         this.position = this.position.add2(this.speed);
         this.shape.move(this.speed.to2());
 
         // Eject self from walls
+        this.collided = false;
         while (collideWithWorld(&this.shape)) |eject| {
+            this.collided = true;
             this.shape.move(.init(
                 eject.pen_dir[0] * (eject.pen_length + 0.001),
                 eject.pen_dir[1] * (eject.pen_length + 0.001),
@@ -125,10 +131,6 @@ pub const PhysicsEntity = struct {
 
     pub fn isGrounded(this: *const PhysicsEntity) bool {
         return this.speed.v[2] <= 0 and isOnFloor(&this.shape);
-    }
-
-    pub inline fn doGravity(this: *PhysicsEntity) void {
-        this.speed.v[2] -= gravity;
     }
 };
 

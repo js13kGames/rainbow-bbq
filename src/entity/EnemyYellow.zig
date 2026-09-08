@@ -9,17 +9,14 @@ const mtx = @import("../mtx.zig");
 
 const State = enum {
     approach,
-    approach_jump,
     charge,
     launch,
     plugged,
-    recover,
 };
 
 points: [8]mtx.Vec2 = undefined,
 time: usize = 0,
 state: State = .approach,
-approach_speed: mtx.Vector = .init(0, 0, 0),
 
 const elec_time = 120;
 const stuck_time = 70;
@@ -49,42 +46,12 @@ pub fn update(entity: *Entity) void {
         .approach => {
             // That's the direction we want to go
             const target_direction = entity.directionTo(Entity.Player.player);
-            const added_speed = mtx.Vector
-                .init(speed_accel, 0, 0)
-                .rotateZ(target_direction);
-
-            // If speed changed, we MUST have collided with a wall!
-            if (this.approach_speed.length2() != 0 and this.approach_speed.length2() > entity.body.speed.length2()) {
-                // Ok, but is player in that direction?
-                if (this.approach_speed.dot2(added_speed) > 0) {
-                    this.state = .approach_jump;
-                    entity.body.speed.v[2] = 2.6;
-                }
-            }
-
-            entity.body.speed = entity.body.speed.add4(added_speed);
-
-            // Cap speed
-            const speed_len = entity.body.speed.length2();
-            if (speed_len > speed_max) {
-                const speed_dir = entity.body.speed.normalize2();
-                entity.body.speed = speed_dir.mulScalar2(speed_max);
-            }
-
-            this.approach_speed = entity.body.speed;
+            entity.moveTowards(target_direction, speed_accel, speed_max, 2.6);
 
             // Are we close yet? Initiate attack?
-            if (entity.distanceTo(Entity.Player.player) < 80) {
+            if (entity.distanceTo(Entity.Player.player) < 80 and entity.body.isGrounded()) {
                 this.state = .charge;
                 this.time = 0;
-            }
-        },
-
-        .approach_jump => {
-            entity.body.speed.v[0] = this.approach_speed.v[0];
-            entity.body.speed.v[1] = this.approach_speed.v[1];
-            if (entity.body.isGrounded()) {
-                this.state = .approach;
             }
         },
 
@@ -108,16 +75,12 @@ pub fn update(entity: *Entity) void {
 
         .plugged => {
             if (this.time == elec_time + stuck_time) {
-                this.state = .approach_jump;
-                this.approach_speed = .init(0, 0, 0);
+                this.state = .approach;
                 entity.body.speed = .init(0, 0, 2);
             }
         },
-
-        else => {},
     }
 
-    entity.body.doGravity();
     entity.body.moveAndCollide();
 }
 
@@ -130,6 +93,14 @@ pub fn draw(entity: *const Entity) void {
     angle = 0;
 
     switch (this.state) {
+        .approach => {
+            frame = 0;
+            if ((this.time >> 4) & 1 == 1) {
+                frame += 1;
+                if ((this.time >> 5) & 1 == 1) frame += 1;
+            }
+        },
+
         .charge => {
             frame = 3;
             yscale = 1.0 - @as(f32, @floatFromInt(this.time)) / 90.0;
@@ -139,14 +110,6 @@ pub fn draw(entity: *const Entity) void {
             frame = 3;
             if (entity.body.speed.v[2] <= 0) {
                 yscale = -1;
-            }
-        },
-
-        else => {
-            frame = 0;
-            if ((this.time >> 4) & 1 == 1) {
-                frame += 1;
-                if ((this.time >> 5) & 1 == 1) frame += 1;
             }
         },
     }
