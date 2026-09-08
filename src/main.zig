@@ -43,6 +43,7 @@ export fn a() void {
     Entity.EnemyRed.init(Entity.findFree().?, .init(100, 100, 0));
     Entity.EnemyYellow.init(Entity.findFree().?, .init(0, -500, 0));
     Entity.EnemyGreen.init(Entity.findFree().?, .init(0, 500, 0));
+    Entity.EnemyOrange.init(Entity.findFree().?, .init(200, 0, 0));
 }
 
 var frame: f32 = 0;
