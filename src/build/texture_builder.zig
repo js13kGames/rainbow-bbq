@@ -280,10 +280,8 @@ pub fn main(init: std.process.Init) !void {
     try w_list.print("pub const atlas_height = {};\n\n", .{atlas_h});
 
     try w_list.writeAll(
-        \\u0: f32,
-        \\v0: f32,
-        \\u1: f32,
-        \\v1: f32,
+        \\u: [2]f32,
+        \\v: [2]f32,
         \\
         \\/// If this sprite is an animation, this can be used to get a specific frame.
         \\/// It is on you to know how many frames a sprite has.
@@ -381,10 +379,10 @@ const OutWriter = struct {
                 const tc_u1 = @as(f32, @floatFromInt(frame.x + image.w)) / this.atlas_w;
                 const tc_v1 = @as(f32, @floatFromInt(frame.y + image.h)) / this.atlas_h;
 
-                try this.list.print("    .{{ .u0 = {}, .v0 = {}, .u1 = {}, .v1 = {} }},\n", .{
+                try this.list.print("    .{{ .u = .{{ {}, {} }}, .v = .{{ {}, {} }} }},\n", .{
                     tc_u0,
-                    tc_v0,
                     tc_u1 - 0.00001,
+                    tc_v0,
                     tc_v1 - 0.00001,
                 });
             }

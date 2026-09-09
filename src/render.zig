@@ -112,16 +112,13 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
 
     var verts = vertex_buffer.addManyAsSliceAssumeCapacity(6);
 
-    const uv_u: [2]f32 = .{ spr.u0, spr.u1 };
-    const uv_v: [2]f32 = .{ spr.v0, spr.v1 };
-
     for (0..4) |i| {
         const x = i & 1;
         const z = i >> 1;
 
         verts[i] = .{
             .pos = (mtx.Vector{ .v = .{ @floatFromInt(x), 0, @floatFromInt(z), 1 } }).transform3(&matrix).v,
-            .uv = .{ uv_u[x], uv_v[1 - z] },
+            .uv = .{ spr.u[x], spr.v[1 - z] },
             .color_back = t.color_back,
             .color_fore = t.color_fore,
         };
@@ -196,13 +193,13 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
     const last_point = polygon.points[polygon.points.len - 1];
     var vert_00 = Vertex{
         .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_max }),
-        .uv = .{ spr.u0, spr.v0 },
+        .uv = .{ spr.u[0], spr.v[0] },
         .color_back = wall.colors.back,
         .color_fore = wall.colors.fore,
     };
     var vert_01 = Vertex{
         .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_min }),
-        .uv = .{ spr.u0, spr.v1 },
+        .uv = .{ spr.u[0], spr.v[1] },
         .color_back = wall.colors.back,
         .color_fore = wall.colors.fore,
     };
@@ -213,18 +210,18 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
     var y_max = -std.math.inf(f32);
 
     for (polygon.points) |point| {
-        vert_00.uv[0] = spr.u0;
-        vert_01.uv[0] = spr.u0;
+        vert_00.uv[0] = spr.u[0];
+        vert_01.uv[0] = spr.u[0];
 
         const vert_10 = Vertex{
             .pos = transformVector([3]f32{ point[0], point[1], polygon.z_max }),
-            .uv = .{ spr.u1, spr.v0 },
+            .uv = .{ spr.u[1], spr.v[0] },
             .color_back = wall.colors.back,
             .color_fore = wall.colors.fore,
         };
         const vert_11 = Vertex{
             .pos = transformVector([3]f32{ point[0], point[1], polygon.z_min }),
-            .uv = .{ spr.u1, spr.v1 },
+            .uv = .{ spr.u[1], spr.v[1] },
             .color_back = wall.colors.back,
             .color_fore = wall.colors.fore,
         };
@@ -250,8 +247,8 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
 
     // Draw top
 
-    const diff_u = spr.u1 - spr.u0;
-    const diff_v = spr.v1 - spr.v0;
+    const diff_u = spr.u[1] - spr.u[0];
+    const diff_v = spr.v[1] - spr.v[0];
     const diff_x = x_max - x_min;
     const diff_y = y_max - y_min;
 
@@ -262,8 +259,8 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         const vert = Vertex{
             .pos = transformVector(mtx.Vec3{ point[0], point[1], polygon.z_max }),
             .uv = .{
-                spr.u0 + (point[0] - x_min) / diff_x * diff_u,
-                spr.v0 + (point[1] - y_min) / diff_y * diff_v,
+                spr.u[0] + (point[0] - x_min) / diff_x * diff_u,
+                spr.v[0] + (point[1] - y_min) / diff_y * diff_v,
             },
             .color_back = wall.colors.back,
             .color_fore = wall.colors.fore,

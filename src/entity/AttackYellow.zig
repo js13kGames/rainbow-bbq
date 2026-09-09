@@ -77,7 +77,7 @@ fn buildRingVert(angle: f32, distance: f32, pos: mtx.Vector) render.Vertex {
     const color = Sprite.attack_yellow.colors.fore;
     return .{
         .pos = render.transformVector(pos.add4((mtx.Vector{ .v = .{ distance, 0, 1, 0 } }).rotateZ(angle))),
-        .uv = .{ spr.u0, spr.v0 },
+        .uv = .{ spr.u[0], spr.v[0] },
         .color_fore = color,
         .color_back = color,
     };
