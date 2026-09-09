@@ -33,7 +33,8 @@ pub extern "4" fn atan2(y: f32, x: f32) f32;
 pub extern "5" fn sin(v: f32) f32;
 pub extern "6" fn cos(v: f32) f32;
 pub extern "7" fn tan(v: f32) f32;
-pub extern "8" fn random() f32;
+pub extern "8" fn frandom(max: f32) f32;
+pub extern "8" fn irandom(max: usize) usize;
 
 /// Initialize a piece of static memory.
 /// It is not possible to free this memory.

@@ -84,7 +84,7 @@
         /*  5: Math.sin     */  Math.sin,
         /*  6: Math.cos     */  Math.cos,
         /*  7: Math.tan     */  Math.tan,
-        /*  8: Math.random  */  Math.random,
+        /*  8: Math.random  */  (max) => Math.random() * max,
     ]});
 
     // Register inputs

@@ -58,8 +58,8 @@ pub fn draw(entity: *const Entity) void {
     // Draw sparks
     if (this.time & 1 != 0) {
         for (0..3) |_| {
-            const frame = @as(usize, @trunc(js.random() * 3.0));
-            const angle = js.random() * std.math.tau;
+            const frame = js.irandom(3);
+            const angle = js.frandom(std.math.tau);
 
             const sprite = Sprite.attack_yellow;
             render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{

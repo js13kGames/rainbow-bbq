@@ -49,8 +49,8 @@ pub fn update(entity: *Entity) void {
     } else {
         if (this.hidden_time != 0) this.hidden_time -= 1;
         if (this.wander_time == 0) {
-            this.wander_time = (60 * 6) + @as(u32, @trunc(js.random() * (60 * 10)));
-            this.wander_dir = js.random() * std.math.tau;
+            this.wander_time = (60 * 6) + js.irandom(60 * 10);
+            this.wander_dir = js.frandom(std.math.tau);
         }
         this.wander_time -= 1;
 
