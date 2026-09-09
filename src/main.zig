@@ -44,6 +44,7 @@ export fn a() void {
     Entity.EnemyYellow.init(Entity.findFree().?, .init(0, -500, 0));
     Entity.EnemyGreen.init(Entity.findFree().?, .init(0, 500, 0));
     Entity.EnemyOrange.init(Entity.findFree().?, .init(200, 0, 0));
+    Entity.EnemyPurple.init(Entity.findFree().?, .init(-200, 0, 0));
 }
 
 var frame: f32 = 0;
