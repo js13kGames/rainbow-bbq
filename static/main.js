@@ -3,7 +3,7 @@
     const gl = c.getContext("webgl2", {
         antialias: false,
     });
-    if (!gl) throw new Error("WebGL2 not available");
+    // if (!gl) throw new Error("WebGL2 not available");
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
@@ -18,18 +18,22 @@
     gl.shaderSource(shaderV, await (await fetch("shader.vert.glsl")).text());
     gl.compileShader(shaderV);
 
+    /*
     if (l = gl.getShaderInfoLog(shaderV)) {
         console.error("vertex: " + l);
     }
+    */
 
     // Create fragment shader
     const shaderF = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(shaderF, await (await fetch("shader.frag.glsl")).text());
     gl.compileShader(shaderF);
 
+    /*
     if (l = gl.getShaderInfoLog(shaderF)) {
         console.error("fragment: " + l);
     }
+    */
 
     // Link shaders into a program
     const program = gl.createProgram();
@@ -39,8 +43,7 @@
     gl.useProgram(program);
 
     // Create vertex buffer (singular)
-    const vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, 0x400000, gl.DYNAMIC_DRAW);
 
     // Set up vertex state (no VAO or anything, we straight ballin')
@@ -59,16 +62,15 @@
     const module = await WebAssembly.compile(await (await fetch(0)).arrayBuffer());
     const instance = await WebAssembly.instantiate(module, {"": [
         /*  0: memory       */  wasmMemory,
-        /*  1: log          */  (logLevel, strPtr, strLen) => console[["error", "warn", "info", "debug"][logLevel]]((new TextDecoder()).decode(new Uint8Array(wasmMemory.buffer, strPtr, strLen))),
+        /*  1: log          */  () => 0, // (logLevel, strPtr, strLen) => console[["error", "warn", "info", "debug"][logLevel]]((new TextDecoder()).decode(new Uint8Array(wasmMemory.buffer, strPtr, strLen))),
         /*  2: draw         */  (vertexPtr, numVerts) => {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Uint8Array(wasmMemory.buffer, vertexPtr, numVerts * 32));
             gl.drawArrays(gl.TRIANGLES, 0, numVerts);
             gl.clear(gl.DEPTH_BUFFER_BIT);
         },
         /*  3: texUpload    */  (dataPtr, texWidth, texHeight) => {
-            const texture = gl.createTexture();
             gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -86,12 +88,12 @@
     ]});
 
     // Register inputs
-    addEventListener("keydown", (event) => {
+    onkeydown = (event) => {
         instance.exports.k(event.keyCode, true);
-    });
-    addEventListener("keyup", (event) => {
+    };
+    onkeyup = (event) => {
         instance.exports.k(event.keyCode, false);
-    });
+    };
 
     onmousemove = (event) => {
         if (event.buttons) {

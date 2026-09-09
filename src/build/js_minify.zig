@@ -2,7 +2,7 @@
 //! It imposes some restrictions on the input JS code:
 //! * Semicolons are required, always
 //! * No use of the `arguments` keyword
-//!
+//! * Assumes true === 1 and false === 0
 
 const std = @import("std");
 

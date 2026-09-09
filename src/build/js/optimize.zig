@@ -152,6 +152,24 @@ const Optimizer = struct {
         }
     };
 
+    const CollapseBool = struct {
+        fn run(this: *Optimizer, node: *ast.Expression) bool {
+            const ident: ast.Text = unionField(node, .identifier) orelse return false;
+            const str = ident.toString(this.options.src);
+
+            if (std.mem.eql(u8, str, "true")) {
+                node.* = .{ .number = ast.Number{ .custom = 1 } };
+                return true;
+            }
+            if (std.mem.eql(u8, str, "false")) {
+                node.* = .{ .number = ast.Number{ .custom = 0 } };
+                return true;
+            }
+
+            return false;
+        }
+    };
+
     /// Only apply this one ONCE
     const MinifyNames = struct {
         const Name = struct {
@@ -371,6 +389,7 @@ const Optimizer = struct {
     fn applyOptExpression(this: *Optimizer, expr: *ast.Expression) Error!void {
         while (true) {
             var ran = false;
+            ran = ran or CollapseBool.run(this, expr);
             ran = ran or StripWraps.run(this, expr);
             ran = ran or RemoveGlEnum.run(this, expr);
             ran = ran or try InlineShaderSource.run(this, expr);
