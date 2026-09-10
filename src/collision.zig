@@ -69,11 +69,11 @@ pub const PhysicsEntity = struct {
 
     pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) PhysicsEntity {
         for (points, 0..) |*point, i| {
-            const angle = (std.math.tau / 8.0) * @as(f32, @floatFromInt(i));
+            const angle = (std.math.tau / @as(f32, @floatFromInt(points.len))) * @as(f32, @floatFromInt(i));
 
             point.* = .{
-                pos.v[0] + js.cos(angle) * radius,
-                pos.v[1] + js.sin(angle) * radius,
+                pos.v[0] + js.sin(angle) * radius,
+                pos.v[1] + js.cos(angle) * radius,
             };
         }
 
