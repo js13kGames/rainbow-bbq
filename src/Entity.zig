@@ -9,7 +9,7 @@ pub const EnemyPurple = @import("entity/EnemyPurple.zig");
 pub const EnemyBlue = @import("entity/EnemyBlue.zig");
 
 pub const Particle = @import("entity/Particle.zig");
-pub const AttackYellow = @import("entity/AttackYellow.zig");
+pub const Hitbox = @import("entity/Hitbox.zig");
 pub const AttackPurple = @import("entity/AttackPurple.zig");
 
 const collision = @import("collision.zig");
@@ -58,7 +58,7 @@ inner: union {
     enemy_blue: EnemyBlue,
 
     particle: Particle,
-    attack_yellow: AttackYellow,
+    hitbox: Hitbox,
     attack_purple: AttackPurple,
 },
 
