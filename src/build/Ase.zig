@@ -38,18 +38,26 @@ pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
     @memset(buffer, .{ 0, 0, 0, 0 });
 
     for (frame.cels) |cel| {
-        std.debug.assert(cel.header.x >= 0);
-        std.debug.assert(cel.header.y >= 0);
-        const cel_x = @as(usize, @intCast(cel.header.x));
-        const cel_y = @as(usize, @intCast(cel.header.y));
+        const cel_x = @as(isize, @intCast(cel.header.x));
+        const cel_y = @as(isize, @intCast(cel.header.y));
         const cel_w, const cel_h = switch (cel.extra_header) {
             .raw => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
             .compressed_img => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
             else => @panic("bad"),
         };
 
-        for (0..@min(cel_h, ch - cel_y)) |y| {
-            for (0..@min(cel_w, cw - cel_x)) |x| {
+        for (0..cel_h) |y| {
+            const yi: isize = @bitCast(y);
+            if (yi + cel_y < 0) continue;
+            const dst_y: usize = @bitCast(cel_y + yi);
+            if (dst_y >= ch) continue;
+
+            for (0..cel_w) |x| {
+                const xi = @as(isize, @intCast(x));
+                if (xi + cel_x < 0) continue;
+                const dst_x: usize = @bitCast(cel_x + xi);
+                if (dst_x >= cw) continue;
+
                 const src_pixel = switch (this.header.color_depth) {
                     .paletted => blk: {
                         const i: usize = (y * cel_w) + x;
@@ -67,7 +75,7 @@ pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
                 };
                 if (src_pixel[3] == 0) continue;
 
-                buffer[(cel_y + y) * cw + (cel_x + x)] = src_pixel;
+                buffer[dst_y * cw + dst_x] = src_pixel;
             }
         }
     }
