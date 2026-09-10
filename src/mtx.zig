@@ -326,6 +326,10 @@ pub const Vector = struct {
         return .{ .v = this.v - other.v };
     }
 
+    pub inline fn mul4(this: Vector, other: Vector) Vector {
+        return .{ .v = this.v * other.v };
+    }
+
     pub inline fn mulScalar2(this: Vector, other: f32) Vector {
         return .{ .v = this.v * @as(Vec4, .{ other, other, 1, 1 }) };
     }

@@ -14,6 +14,7 @@ h: usize,
 pos: mtx.Vector,
 speed: mtx.Vector = .init(0, 0, 0),
 speed_delta: mtx.Vector = .init(0, 0, 0),
+speed_damp: mtx.Vector = .init(1, 1, 1),
 
 angle: f32 = 0,
 angle_delta: f32 = 0,
@@ -38,16 +39,16 @@ pub fn init(entity: *Entity, this: @This()) void {
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.particle;
 
-    if (this.time == 0) {
+    this.speed = this.speed.add4(this.speed_delta).mul4(this.speed_damp);
+    this.pos = this.pos.add4(this.speed);
+    this.angle += this.angle_delta;
+    this.scale += this.scale_delta;
+
+    if (this.time == 0 or this.scale <= 0) {
         entity.flags.alive = false;
         return;
     }
     this.time -= 1;
-
-    this.speed = this.speed.add4(this.speed_delta);
-    this.pos = this.pos.add4(this.speed);
-    this.angle += this.angle_delta;
-    this.scale += this.scale_delta;
 }
 
 pub fn draw(entity: *const Entity) void {

@@ -36,6 +36,7 @@ pub fn update(entity: *Entity) void {
     const this = &entity.inner.enemy_orange;
 
     const player_distance = entity.distanceTo(Entity.Player.player);
+    const player_direction = entity.directionTo(Entity.Player.player);
 
     if (this.hidden) {
         this.wander_time += 1;
@@ -49,8 +50,10 @@ pub fn update(entity: *Entity) void {
     } else {
         if (this.hidden_time != 0) this.hidden_time -= 1;
         if (this.wander_time == 0) {
-            this.wander_time = (60 * 6) + js.irandom(60 * 10);
-            this.wander_dir = js.frandom(std.math.tau);
+            this.wander_time = (60 * 4) + js.irandom(60 * 4);
+
+            const dir = js.frandom(1);
+            this.wander_dir = player_direction + (dir * dir * std.math.tau * std.math.sign(dir - 0.5));
         }
         this.wander_time -= 1;
 
