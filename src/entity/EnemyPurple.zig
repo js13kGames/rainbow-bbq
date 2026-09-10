@@ -39,13 +39,15 @@ pub fn update(entity: *Entity) void {
     // Teleport out of frame
     if (this.time == 60 * 6) {
         // Spawn particles
-        std.log.info("spawn particles", .{});
+        spawnParticles(entity.body.position);
 
-        entity.body = .initCircle(.init(0, 0, -1000), &this.points, height, radius);
+        entity.body.position.v[2] = -1000;
+        entity.body.shape.z_min = -1000;
+        entity.body.shape.z_max = -1000;
     }
 
     // Move back INTO frame
-    if (this.time == 70 * 7) {
+    if (this.time == 62 * 7) {
         const player_position = Entity.Player.player.body.position;
 
         for (0..50) |_| {
@@ -68,7 +70,27 @@ pub fn update(entity: *Entity) void {
         }
 
         // Spawn particles
-        std.log.info("spawn particles", .{});
+        spawnParticles(entity.body.position);
+    }
+}
+
+fn spawnParticles(pos: mtx.Vector) void {
+    for (0..10) |_| {
+        const entity = Entity.findFree() orelse return;
+
+        Entity.Particle.init(entity, .{
+            .sprite = Sprite.smoke.spr,
+            .colors = Sprite.enemy_purple.colors,
+            .pos = pos.add4(.init(0, 0, 12)),
+            .w = 8,
+            .h = 8,
+            .time = 20 + js.irandom(10),
+            .speed = .init(
+                js.frandom(2) - 1,
+                js.frandom(2) - 1,
+                js.frandom(2) - 1,
+            ),
+        });
     }
 }
 
