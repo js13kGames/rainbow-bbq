@@ -33,7 +33,10 @@ pub fn update(entity: *Entity) void {
 
     // Shoot projectile
     if (this.time == 60 * 3) {
-        std.log.info("shoot projectile", .{});
+        if (Entity.findFree()) |projectile| {
+            const player_direction = entity.directionTo(Entity.Player.player);
+            Entity.AttackPurple.init(projectile, entity.body.position, player_direction);
+        }
     }
 
     // Teleport out of frame
