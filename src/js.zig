@@ -74,6 +74,14 @@ pub const input = struct {
     var mouse_nx: f32 = 0;
     var mouse_ny: f32 = 0;
 
+    pub const key_up = 38;
+    pub const key_down = 40;
+    pub const key_left = 37;
+    pub const key_right = 39;
+
+    pub const key_shift = 16;
+    pub const key_ctrl = 17;
+
     pub const DigitalState = packed struct(u8) {
         previous: bool = false,
         current: bool = false,

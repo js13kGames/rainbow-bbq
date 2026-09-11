@@ -10,15 +10,24 @@ const js = @import("../js.zig");
 const collision = @import("../collision.zig");
 
 points: [8]mtx.Vec2 = undefined,
+charge: f32 = 0.5,
+charging: bool = false,
+anim: f32 = 0,
+particle_tick: usize = 0,
 
 /// Singleton instance
 pub var player: *Entity = undefined;
 
-const move_accel: f32 = 0.035;
-const max_speed = 1.6;
+const speed_accel_regular: f32 = 0.035;
+const speed_max_regular: f32 = 1.6;
+
+const speed_accel_charge: f32 = 0.07;
+const speed_max_charge: f32 = 3.2;
 
 const player_width = 14;
 const player_height = 16;
+
+const charge_speed_init: f32 = 2.4;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .player = .{} };
@@ -35,18 +44,47 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     player = entity;
 }
 
+const rainbow_colors = [_]Sprite.Colors{
+    Sprite.enemy_red.colors,
+    Sprite.enemy_orange.colors,
+    Sprite.enemy_yellow.colors,
+    Sprite.enemy_green.colors,
+    Sprite.enemy_blue.colors,
+    Sprite.enemy_purple.colors,
+};
+
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
-    _ = this;
+
+    // Begin charge
+    if (js.input.keys[js.input.key_shift].isPressed()) {
+        entity.body.speed = mtx.Vector.init(0, charge_speed_init, 0).rotateZ(render.camera.yaw_rad);
+
+        // Spawn sum particles
+        for (0..12) |_| {
+            spawnParticle(entity, 1);
+        }
+    }
+
+    var speed_accel = speed_accel_regular;
+    var speed_max = speed_max_regular;
+    this.charging = js.input.keys[js.input.key_shift].isHeld();
+    if (this.charging) {
+        spawnParticle(entity, 0.3);
+        speed_accel = speed_accel_charge;
+        speed_max = speed_max_charge;
+    }
 
     // Prepare movement
-    entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, move_accel, max_speed, 0);
+    entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, speed_accel, speed_max, 0);
     if (js.input.keys[' '].isHeld() and entity.body.speed.v[2] <= 0 and collision.isOnFloor(&entity.body.shape)) {
         entity.body.speed.v[2] = 3;
+        this.anim = 0;
     }
 
     // And now go
     entity.body.moveAndCollide();
+    this.anim += entity.body.speed.length2();
 
     // Move camera
     const camera_distance_h = 50;
@@ -62,13 +100,40 @@ pub fn update(entity: *Entity) void {
 
 pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.player;
-    _ = this;
+
+    var frame: usize = 0;
+    if (this.charging) frame = 2;
+
+    // Use air sprite?
+    if (!entity.body.isGrounded() or @as(usize, @trunc(this.anim / 12.0)) & 1 != 0) {
+        frame += 1;
+    }
 
     // Render the thing
     const sprite = Sprite.unicorn;
-    render.drawQuad(sprite.spr, .fromAtlas(sprite, .{
+    render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{
         .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] },
         .rot = .{ 0, 0, render.camera.yaw_rad },
         .origin = .{ 0.5, 0 },
     }));
+}
+
+fn spawnParticle(entity: *Entity, speed: f32) void {
+    const this = &entity.inner.player;
+    const particle = Entity.findFree() orelse return;
+    this.particle_tick += 1;
+
+    Entity.Particle.init(particle, .{
+        .sprite = Sprite.smoke.spr,
+        .w = 4,
+        .h = 4,
+        .time = 30,
+        .pos = entity.body.position,
+        .colors = rainbow_colors[this.particle_tick % 6],
+        .speed = .init(
+            js.frandom(speed * 2) - speed,
+            js.frandom(speed * 2) - speed,
+            js.frandom(speed * 2) - speed,
+        ),
+    });
 }
