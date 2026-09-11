@@ -92,7 +92,9 @@ pub fn update(entity: *Entity) void {
                 this.invuln_timer = invuln_time;
                 if (this.hp == 0) {
                     this.dead = true;
-                    // TODO: game-over screen
+                    for (0..80) |_| {
+                        spawnParticle(entity, 2.2);
+                    }
                 }
             }
         }

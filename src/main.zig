@@ -8,6 +8,7 @@ const camera = @import("camera.zig");
 const gbcompress = @import("build/gbcompress.zig");
 const Entity = @import("Entity.zig");
 const collision = @import("collision.zig");
+const ui = @import("ui.zig");
 
 pub const std_options = std.Options{
     .logFn = struct {
@@ -38,7 +39,10 @@ export fn a() void {
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
     collision.initWorld();
+    restart();
+}
 
+pub fn restart() void {
     Entity.initAll();
     Entity.Player.init(Entity.findFree().?, .init(0, 0, 1));
     Entity.Grill.init(Entity.findFree().?, .init(0, 0, 1));
@@ -75,28 +79,5 @@ export fn b() void {
     }
 
     // Render UI
-    {
-        // Create 2D camera matrix
-        const camera_matrix = comptime (camera.Camera2D{
-            .x = 80,
-            .y = -72,
-            .width = 160,
-            .height = 144,
-            .z_near = -10,
-            .z_far = 10,
-        }).getMatrix();
-        render.pushMatrix(&camera_matrix);
-        defer render.popMatrix();
-
-        // Ok now draw a sprite
-        const player = &Entity.Player.player.inner.player;
-        const content: []const Entity.EnemyKind = player.speared[0..player.num_speared];
-        Entity.Grill.drawSpear(
-            .init(12, 105, 0),
-            .{ std.math.pi / 2.0, 0, 0 },
-            content,
-        );
-
-        render.flush();
-    }
+    ui.run();
 }

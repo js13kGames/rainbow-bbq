@@ -62,7 +62,7 @@
     const module = await WebAssembly.compile(await (await fetch(0)).arrayBuffer());
     const instance = await WebAssembly.instantiate(module, {"": [
         /*  0: memory       */  wasmMemory,
-        /*  1: log          */  () => 0, // (logLevel, strPtr, strLen) => console[["error", "warn", "info", "debug"][logLevel]]((new TextDecoder()).decode(new Uint8Array(wasmMemory.buffer, strPtr, strLen))),
+        /*  1: log          */  (logLevel, strPtr, strLen) => console[["error", "warn", "info", "debug"][logLevel]]((new TextDecoder()).decode(new Uint8Array(wasmMemory.buffer, strPtr, strLen))),
         /*  2: draw         */  (vertexPtr, numVerts) => {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Uint8Array(wasmMemory.buffer, vertexPtr, numVerts * 32));
             gl.drawArrays(gl.TRIANGLES, 0, numVerts);
@@ -85,6 +85,13 @@
         /*  6: Math.cos     */  Math.cos,
         /*  7: Math.tan     */  Math.tan,
         /*  8: Math.random  */  (max) => Math.random() * max,
+        /*  9: highscore    */  (score) => {
+            const key = "2026_rainbowbbq_highscore";
+            const oldScore = localStorage.getItem(key);
+            const highScore = Math.max(score, oldScore);
+            localStorage.setItem(key, highScore);
+            return highScore;
+        },
     ]});
 
     // Register inputs

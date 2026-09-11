@@ -168,7 +168,7 @@ pub const TextDrawDescriptor = struct {
 pub fn drawText(text: []const u8, t: TextDrawDescriptor) void {
     var pos = t.pos;
     if (t.centered) {
-        pos.v[0] -= 4.0 * @as(f32, @floatFromInt(text.len));
+        pos.v[0] -= 4.0 * @as(f32, @floatFromInt(text.len)) * t.scale;
     }
 
     for (text, 0..) |char, i| {
