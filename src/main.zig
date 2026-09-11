@@ -29,6 +29,7 @@ pub const std_options = std.Options{
 export fn a() void {
     // Ensure there is always a unit matrix at the bottom of the stack
     render.matrix_stack.appendAssumeCapacity(.{});
+    Sprite.init();
 
     // Decompress and upload texture
     const texture_data = js.staticAlloc(u8, Sprite.atlas_width * Sprite.atlas_height);

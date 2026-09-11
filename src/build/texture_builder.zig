@@ -271,6 +271,8 @@ pub fn main(init: std.process.Init) !void {
     try w_list.writeAll(
         \\//! auto generated
         \\
+        \\const std = @import("std");
+        \\
         \\const Sprite = @This();
         \\
         \\
@@ -294,7 +296,31 @@ pub fn main(init: std.process.Init) !void {
         \\    fore: u32,
         \\};
         \\
-        \\const _list = [_]Sprite{
+        \\const SpriteRaw = struct {
+        \\    u: [2]u8,
+        \\    v: [2]u8,
+        \\};
+        \\
+        \\pub var _list: [_raw_list.len]Sprite = undefined;
+        \\
+        \\pub fn init() void {
+        \\    const Vec4 = @Vector(4, f32);
+        \\    const IVec4 = @Vector(4, u32);
+        \\    for (&_raw_list, &_list) |src, *dst| {
+        \\        const ivec = IVec4{
+        \\            src.u[0], @as(u32, src.u[1]) + 1,
+        \\            src.v[0], @as(u32, src.v[1]) + 1,
+        \\        };
+        \\
+        \\        const fvec = @as(Vec4, @floatFromInt(ivec)) / @as(Vec4, @splat(256));
+        \\        dst.* = .{
+        \\            .u = .{ fvec[0], fvec[1] },
+        \\            .v = .{ fvec[2], fvec[3] },
+        \\        };
+        \\    }
+        \\}
+        \\
+        \\pub const _raw_list = [_]SpriteRaw{
         \\
     );
 
@@ -373,17 +399,16 @@ const OutWriter = struct {
 
             // Write frames to the sprite list
             for (image.frames) |*frame| {
-                const tc_u0 = @as(f32, @floatFromInt(frame.x)) / this.atlas_w;
-                const tc_v0 = @as(f32, @floatFromInt(frame.y)) / this.atlas_h;
-
-                const tc_u1 = @as(f32, @floatFromInt(frame.x + image.w)) / this.atlas_w;
-                const tc_v1 = @as(f32, @floatFromInt(frame.y + image.h)) / this.atlas_h;
+                std.debug.assert(frame.x & 1 == 0);
+                std.debug.assert(frame.y & 1 == 0);
+                std.debug.assert(image.w & 1 == 0);
+                std.debug.assert(image.h & 1 == 0);
 
                 try this.list.print("    .{{ .u = .{{ {}, {} }}, .v = .{{ {}, {} }} }},\n", .{
-                    tc_u0,
-                    tc_u1 - 0.00001,
-                    tc_v0,
-                    tc_v1 - 0.00001,
+                    (frame.x) / 2,
+                    (frame.x + image.w) / 2 - 1,
+                    (frame.y) / 2,
+                    (frame.y + image.h) / 2 - 1,
                 });
             }
 
@@ -493,7 +518,7 @@ const BinPack = struct {
         }
 
         const img_w = std.mem.alignForward(usize, image.w, 8);
-        const img_h = image.h;
+        const img_h = std.mem.alignForward(usize, image.h, 2);
 
         if (img_w <= node.w and img_h <= node.h) {
             return node;
@@ -506,7 +531,7 @@ const BinPack = struct {
         node.image = image;
 
         const img_w = std.mem.alignForward(usize, image.w, 8);
-        const img_h = image.h;
+        const img_h = std.mem.alignForward(usize, image.h, 2);
 
         const down = try arena.create(BinPack);
         down.* = .{
