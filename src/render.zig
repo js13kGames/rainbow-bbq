@@ -26,10 +26,10 @@ pub var camera: Camera = Camera{
 };
 
 pub const QuadDescriptor = struct {
-    size: [2]f32,
-    origin: [2]f32 = .{ 0.5, 0.5 },
-    pos: [3]f32 = .{ 0, 0, 0 },
-    rot: [3]f32 = .{ 0, 0, 0 },
+    size: mtx.Vec2,
+    origin: mtx.Vec2 = .{ 0.5, 0.5 },
+    pos: mtx.Vec3 = .{ 0, 0, 0 },
+    rot: mtx.Vec3 = .{ 0, 0, 0 },
     color_back: u32 = buildColor(.{ 0, 255, 0, 255 }),
     color_fore: u32 = buildColor(.{ 255, 0, 0, 255 }),
 
@@ -84,9 +84,9 @@ pub const QuadDescriptor = struct {
 pub fn transformVector(vec: anytype) [4]f32 {
     const vector = switch (@TypeOf(vec)) {
         mtx.Vector => vec,
-        [2]f32, mtx.Vec2 => mtx.Vector.init(vec[0], vec[1], 0),
-        [3]f32, mtx.Vec3 => mtx.Vector.init(vec[0], vec[1], vec[2]),
-        [4]f32, mtx.Vec4 => mtx.Vector{ .v = vec },
+        mtx.Vec2 => mtx.Vector.init(vec[0], vec[1], 0),
+        mtx.Vec3 => mtx.Vector.init(vec[0], vec[1], vec[2]),
+        mtx.Vec4 => mtx.Vector{ .v = vec },
 
         else => @compileError("no, bad"),
     };
@@ -142,8 +142,8 @@ pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
     frame: usize = 0,
     pos: mtx.Vector = .zero,
     angle: f32 = 0,
-    scale: [2]f32 = .{ 1, 1 },
-    origin: [2]f32 = .{ 0.5, 0 },
+    scale: mtx.Vec2 = .{ 1, 1 },
+    origin: mtx.Vec2 = .{ 0.5, 0 },
 }) void {
     drawQuad(sprite.spr.frame(t.frame), .{
         .pos = .{ t.pos.v[0], t.pos.v[1], t.pos.v[2] },
@@ -158,8 +158,8 @@ pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
 pub const TextDrawDescriptor = struct {
     pos: mtx.Vector = .zero,
     colors: Sprite.Colors = .{
-        .back = .{ 0, 0, 0, 255 },
-        .fore = .{ 255, 255, 255, 255 },
+        .back = buildColor(.{ 0, 0, 0, 255 }),
+        .fore = buildColor(.{ 255, 255, 255, 255 }),
     },
     centered: bool = false,
     scale: f32 = 1,
@@ -266,13 +266,13 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
     // Draw walls first
     const last_point = polygon.points[polygon.points.len - 1];
     var vert_00 = Vertex{
-        .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_max }),
+        .pos = transformVector(mtx.Vec4{ last_point[0], last_point[1], polygon.z_max, 1 }),
         .uv = .{ spr.u[0], spr.v[0] },
         .color_back = wall.colors.back,
         .color_fore = wall.colors.fore,
     };
     var vert_01 = Vertex{
-        .pos = transformVector([3]f32{ last_point[0], last_point[1], polygon.z_min }),
+        .pos = transformVector(mtx.Vec4{ last_point[0], last_point[1], polygon.z_min, 1 }),
         .uv = .{ spr.u[0], spr.v[1] },
         .color_back = wall.colors.back,
         .color_fore = wall.colors.fore,
@@ -288,13 +288,13 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         vert_01.uv[0] = spr.u[0];
 
         const vert_10 = Vertex{
-            .pos = transformVector([3]f32{ point[0], point[1], polygon.z_max }),
+            .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_max, 1 }),
             .uv = .{ spr.u[1], spr.v[0] },
             .color_back = wall.colors.back,
             .color_fore = wall.colors.fore,
         };
         const vert_11 = Vertex{
-            .pos = transformVector([3]f32{ point[0], point[1], polygon.z_min }),
+            .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_min, 1 }),
             .uv = .{ spr.u[1], spr.v[1] },
             .color_back = wall.colors.back,
             .color_fore = wall.colors.fore,
@@ -331,7 +331,7 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
 
     for (polygon.points, 0..) |point, i| {
         const vert = Vertex{
-            .pos = transformVector(mtx.Vec3{ point[0], point[1], polygon.z_max }),
+            .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_max, 1 }),
             .uv = .{
                 spr.u[0] + (point[0] - x_min) / diff_x * diff_u,
                 spr.v[0] + (point[1] - y_min) / diff_y * diff_v,

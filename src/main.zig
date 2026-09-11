@@ -51,11 +51,8 @@ export fn a() void {
     Entity.EnemyBlue.init(Entity.findFree().?, .init(-200, 0, 0));
 }
 
-var frame: f32 = 0;
-
 /// This is the main entrypoint
 export fn b() void {
-    frame += 1.0 / 60.0;
     js.input.update();
 
     // Render main game world
@@ -68,9 +65,7 @@ export fn b() void {
         defer render.popMatrix();
 
         // Draw collision polygons
-        for (&collision.world_walls) |*wall| {
-            render.drawPolygon3D(wall);
-        }
+        for (&collision.world_walls) |*wall| render.drawPolygon3D(wall);
 
         // Render entities
         for (&Entity.all) |*entity| entity.draw();
