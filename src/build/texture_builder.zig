@@ -504,7 +504,10 @@ const BinPack = struct {
             return node.right.?.findNode(image) orelse node.down.?.findNode(image);
         }
 
-        if (image.w <= node.w and image.h <= node.h) {
+        const img_w = std.mem.alignForward(usize, image.w, 8);
+        const img_h = image.h;
+
+        if (img_w <= node.w and img_h <= node.h) {
             return node;
         }
 
@@ -514,20 +517,23 @@ const BinPack = struct {
     pub fn splitNode(node: *BinPack, image: *const Image, arena: std.mem.Allocator) !void {
         node.image = image;
 
+        const img_w = std.mem.alignForward(usize, image.w, 8);
+        const img_h = image.h;
+
         const down = try arena.create(BinPack);
         down.* = .{
             .x = node.x,
-            .y = node.y + image.h,
+            .y = node.y + img_h,
             .w = node.w,
-            .h = node.h - image.h,
+            .h = node.h - img_h,
         };
         node.down = down;
 
         const right = try arena.create(BinPack);
         right.* = .{
-            .x = node.x + image.w,
+            .x = node.x + img_w,
             .y = node.y,
-            .w = node.w - image.w,
+            .w = node.w - img_w,
             .h = node.h,
         };
         node.right = right;
