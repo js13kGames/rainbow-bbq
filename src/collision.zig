@@ -64,7 +64,7 @@ const CollisionResult = struct {
 pub const PhysicsEntity = struct {
     shape: Polygon,
     position: mtx.Vector,
-    speed: mtx.Vector = .init(0, 0, 0),
+    speed: mtx.Vector = .zero,
     collided: bool = false,
 
     pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) PhysicsEntity {

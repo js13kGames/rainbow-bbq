@@ -66,7 +66,7 @@ pub fn update(entity: *Entity) void {
                 this.time = 0;
                 this.state = .idle;
 
-                entity.body.speed = .init(0, 0, 0);
+                entity.body.speed = .zero;
             }
         },
     }

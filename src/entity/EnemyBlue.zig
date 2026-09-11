@@ -88,7 +88,7 @@ pub fn update(entity: *Entity) void {
         if (player_distance < light_distance) {
             this.lit = true;
             this.time = light_time;
-            entity.body.speed = .init(0, 0, 0);
+            entity.body.speed = .zero;
         }
     }
 

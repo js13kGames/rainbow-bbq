@@ -12,8 +12,8 @@ w: usize,
 h: usize,
 
 pos: mtx.Vector,
-speed: mtx.Vector = .init(0, 0, 0),
-speed_delta: mtx.Vector = .init(0, 0, 0),
+speed: mtx.Vector = .zero,
+speed_delta: mtx.Vector = .zero,
 speed_damp: mtx.Vector = .init(1, 1, 1),
 
 angle: f32 = 0,

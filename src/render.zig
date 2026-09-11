@@ -136,7 +136,7 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
 
 pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
     frame: usize = 0,
-    pos: mtx.Vector = .init(0, 0, 0),
+    pos: mtx.Vector = .zero,
     angle: f32 = 0,
     scale: [2]f32 = .{ 1, 1 },
     origin: [2]f32 = .{ 0.5, 0 },
@@ -152,7 +152,7 @@ pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
 }
 
 pub const TextDrawDescriptor = struct {
-    pos: mtx.Vector = .init(0, 0, 0),
+    pos: mtx.Vector = .zero,
     colors: Sprite.Colors = .{
         .back = .{ 0, 0, 0, 255 },
         .fore = .{ 255, 255, 255, 255 },

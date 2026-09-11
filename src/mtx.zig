@@ -230,6 +230,8 @@ pub const Matrix = struct {
 pub const Vector = struct {
     v: Vec4 = .{ 0, 0, 0, 1 },
 
+    pub const zero: Vector = .{ .v = .{ 0, 0, 0, 0 } };
+
     pub fn init(x: f32, y: f32, z: f32) Vector {
         return .{ .v = .{ x, y, z, 1 } };
     }
