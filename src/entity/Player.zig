@@ -24,6 +24,8 @@ score: usize = 0,
 score_multiply: usize = 1,
 score_multiply_timer: usize = 0,
 
+dead: bool = false,
+
 /// Singleton instance
 pub var player: *Entity = undefined;
 
@@ -65,63 +67,66 @@ const rainbow_colors = [_]Sprite.Colors{
 
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
+    if (!this.dead) {
 
-    // Hurt stuff
-    if (this.invuln_timer != 0) this.invuln_timer -= 1;
+        // Hurt stuff
+        if (this.invuln_timer != 0) this.invuln_timer -= 1;
 
-    // Collide with enemies
-    for (&Entity.all) |*other| {
-        if (!other.flags.alive or other.flags.hurt_player == .never) continue;
-        if (collision.shapeOverlapSAT(&entity.body.shape, &other.body.shape) == null) continue;
+        // Collide with enemies
+        for (&Entity.all) |*other| {
+            if (!other.flags.alive or other.flags.hurt_player == .never) continue;
+            if (collision.shapeOverlapSAT(&entity.body.shape, &other.body.shape) == null) continue;
 
-        // Ok, how do we handle this?
-        if (this.charging and other.flags.hurt_player == .regular) {
-            other.flags.alive = false;
+            // Ok, how do we handle this?
+            if (this.charging and other.flags.hurt_player == .regular) {
+                other.flags.alive = false;
 
-            this.score += 100 * this.score_multiply;
+                this.score += 100 * this.score_multiply;
 
-            if (this.num_speared < 6) {
-                this.speared[this.num_speared] = other.flags.enemy_kind.?;
-                this.num_speared += 1;
-            } else {
-            std.log.info("kill {}", .{std.meta.activeTag(other.inner)});
+                if (this.num_speared < 6) {
+                    this.speared[this.num_speared] = other.flags.enemy_kind.?;
+                    this.num_speared += 1;
+                }
+            } else if (this.invuln_timer == 0) {
+                this.hp -= 1;
+                this.invuln_timer = invuln_time;
+                if (this.hp == 0) {
+                    this.dead = true;
+                    // TODO: game-over screen
+                }
             }
-        } else if (this.invuln_timer == 0) {
-            this.hp -= 1;
-            this.invuln_timer = invuln_time;
-            std.log.warn("hurt by {}", .{std.meta.activeTag(other.inner)});
         }
-    }
 
-    // Begin charge
-    if (js.input.keys[js.input.key_shift].isPressed()) {
-        entity.body.speed = mtx.Vector.init(0, charge_speed_init, 0).rotateZ(render.camera.yaw_rad);
+        // Begin charge
+        if (js.input.keys[js.input.key_shift].isPressed()) {
+            entity.body.speed = mtx.Vector.init(0, charge_speed_init, 0).rotateZ(render.camera.yaw_rad);
 
-        // Spawn sum particles
-        for (0..18) |_| {
-            spawnParticle(entity, 1.5);
+            // Spawn sum particles
+            for (0..18) |_| {
+                spawnParticle(entity, 1.5);
+            }
         }
-    }
 
-    var speed_accel = speed_accel_regular;
-    var speed_max = speed_max_regular;
-    this.charging = js.input.keys[js.input.key_shift].isHeld();
-    if (this.charging) {
-        spawnParticle(entity, 0.3);
-        speed_accel = speed_accel_charge;
-        speed_max = speed_max_charge;
-    }
+        var speed_accel = speed_accel_regular;
+        var speed_max = speed_max_regular;
+        this.charging = js.input.keys[js.input.key_shift].isHeld();
+        if (this.charging) {
+            spawnParticle(entity, 0.3);
+            speed_accel = speed_accel_charge;
+            speed_max = speed_max_charge;
+        }
 
-    // Prepare movement
-    entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, speed_accel, speed_max, 0);
-    if (js.input.keys[' '].isHeld() and entity.body.speed.v[2] <= 0 and collision.isOnFloor(&entity.body.shape)) {
-        entity.body.speed.v[2] = 3;
-        this.anim = 0;
-    }
+        // Prepare movement
+        entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, speed_accel, speed_max, 0);
+        if (js.input.keys[' '].isHeld() and entity.body.speed.v[2] <= 0 and collision.isOnFloor(&entity.body.shape)) {
+            entity.body.speed.v[2] = 3;
+            this.anim = 0;
+        }
 
-    // And now go
-    entity.body.moveAndCollide();
-    this.anim += entity.body.speed.length2();
+        // And now go
+        entity.body.moveAndCollide();
+        this.anim += entity.body.speed.length2();
+    }
 
     // Move camera
     const camera_distance_h = 50;
@@ -137,6 +142,7 @@ pub fn update(entity: *Entity) void {
 
 pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.player;
+    if (this.dead) return;
 
     var frame: usize = 0;
     if (this.charging) frame = 2;
