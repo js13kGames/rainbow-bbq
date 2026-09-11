@@ -144,11 +144,10 @@ pub fn draw(entity: *const Entity) void {
         // Draw sparks
         if (this.time & 1 != 0) {
             for (0..3) |_| {
-                frame = js.irandom(3);
                 angle = js.frandom(std.math.tau);
 
                 const sprite = Sprite.attack_yellow;
-                render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{
+                render.drawQuad(sprite.spr, .fromAtlas(sprite, .{
                     .size = .{ 50, attack_radius - attack_ring_thickness },
                     .origin = .{ 0.5, 0 },
                     .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] + 1 },

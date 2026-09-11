@@ -98,14 +98,11 @@ pub fn update(entity: *Entity) void {
 pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.enemy_blue;
 
-    var frame: usize = 0;
     var xscale: f32 = 1;
 
     const flash = (this.time >> 2) & 1 == 0;
 
-    if (!this.lit) {
-        frame = (this.time >> 3) & 1;
-    } else if (flash) {
+    if (this.lit and flash) {
         if (this.time <= 60) xscale = 1.2;
 
         Entity.Hitbox.drawRing(
@@ -119,7 +116,6 @@ pub fn draw(entity: *const Entity) void {
     }
 
     render.drawSpriteBillboard(Sprite.enemy_blue, .{
-        .frame = frame,
         .pos = entity.body.position,
         .scale = .{ xscale, xscale },
     });
