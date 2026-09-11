@@ -199,6 +199,7 @@ fn watanize(b: *std.Build, file: anytype, wat_fname: []const u8) *std.Build.Step
         else => unreachable,
     }
 
+    wat_step.addArg("--enable-all");
     wat_step.addArg("-o");
     const wat_out = wat_step.addOutputFileArg(".wat");
 
