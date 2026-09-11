@@ -14,6 +14,8 @@ charge: f32 = 0.5,
 charging: bool = false,
 anim: f32 = 0,
 particle_tick: usize = 0,
+hp: usize = 3,
+invuln_timer: usize = 0,
 
 /// Singleton instance
 pub var player: *Entity = undefined;
@@ -28,6 +30,7 @@ const player_width = 14;
 const player_height = 16;
 
 const charge_speed_init: f32 = 2.4;
+const invuln_time: usize = 110;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .player = .{} };
@@ -55,6 +58,25 @@ const rainbow_colors = [_]Sprite.Colors{
 
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
+
+    // Hurt stuff
+    if (this.invuln_timer != 0) this.invuln_timer -= 1;
+
+    // Collide with enemies
+    for (&Entity.all) |*other| {
+        if (!other.flags.alive or other.flags.hurt_player == .never) continue;
+        if (collision.shapeOverlapSAT(&entity.body.shape, &other.body.shape) == null) continue;
+
+        // Ok, how do we handle this?
+        if (this.charging and other.flags.hurt_player == .regular) {
+            other.flags.alive = false;
+            std.log.info("kill {}", .{std.meta.activeTag(other.inner)});
+        } else if (this.invuln_timer == 0) {
+            this.hp -= 1;
+            this.invuln_timer = invuln_time;
+            std.log.warn("hurt by {}", .{std.meta.activeTag(other.inner)});
+        }
+    }
 
     // Begin charge
     if (js.input.keys[js.input.key_shift].isPressed()) {
@@ -109,13 +131,17 @@ pub fn draw(entity: *const Entity) void {
         frame += 1;
     }
 
+    const hurt_flash = this.invuln_timer & 2 != 0;
+
     // Render the thing
-    const sprite = Sprite.unicorn;
-    render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{
-        .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] },
-        .rot = .{ 0, 0, render.camera.yaw_rad },
-        .origin = .{ 0.5, 0 },
-    }));
+    if (!hurt_flash) {
+        const sprite = Sprite.unicorn;
+        render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{
+            .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] },
+            .rot = .{ 0, 0, render.camera.yaw_rad },
+            .origin = .{ 0.5, 0 },
+        }));
+    }
 }
 
 fn spawnParticle(entity: *Entity, speed: f32) void {

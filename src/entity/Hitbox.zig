@@ -9,12 +9,12 @@ const js = @import("../js.zig");
 points: [16]mtx.Vec2 = undefined,
 time: usize,
 
-pub fn init(entity: *Entity, pos: mtx.Vector, timer: usize, radius: f32) void {
+pub fn init(entity: *Entity, pos: mtx.Vector, timer: usize, radius: f32, height: f32) void {
     entity.inner = .{ .hitbox = .{ .time = timer } };
     const this = &entity.inner.hitbox;
 
-    entity.flags = .{ .alive = true, .hurt_player = true };
-    entity.body = .initCircle(pos, &this.points, 4, radius);
+    entity.flags = .{ .alive = true, .hurt_player = .always };
+    entity.body = .initCircle(pos, &this.points, height, radius);
 
     entity.vtable = .{
         .update = update,

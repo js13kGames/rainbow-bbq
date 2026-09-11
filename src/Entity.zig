@@ -33,7 +33,16 @@ pub const Flags = struct {
     enemy_kind: ?EnemyKind = null,
 
     /// Does this entity hurt the player on contact?
-    hurt_player: bool = false,
+    hurt_player: enum {
+        /// Never hurts player
+        never,
+
+        /// Damages player while not charging
+        regular,
+
+        /// Always hurts player
+        always,
+    } = .never,
 };
 
 pub const VTable = struct {
@@ -47,7 +56,7 @@ flags: Flags,
 vtable: VTable,
 
 /// Union is required to figure out how much memory to allocate
-inner: union {
+inner: union(enum) {
     none: void,
     player: Player,
     enemy_red: EnemyRed,

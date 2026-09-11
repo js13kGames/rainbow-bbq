@@ -23,7 +23,7 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .enemy_blue = .{} };
     const this = &entity.inner.enemy_blue;
 
-    entity.flags = .{ .alive = true, .enemy_kind = .orange };
+    entity.flags = .{ .alive = true, .enemy_kind = .blue, .hurt_player = .regular };
     entity.body = .initCircle(pos, &this.points, 17, 11);
 
     entity.vtable = .{
@@ -68,7 +68,7 @@ pub fn update(entity: *Entity) void {
         // When explosion starts, create hitbox
         if (this.time == attack_time - 5) {
             if (Entity.findFree()) |hitbox| {
-                Entity.Hitbox.init(hitbox, entity.body.position, attack_time - 5, attack_radius);
+                Entity.Hitbox.init(hitbox, entity.body.position, attack_time - 5, attack_radius, 80);
             }
         }
 

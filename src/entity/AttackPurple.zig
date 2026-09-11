@@ -13,7 +13,7 @@ pub fn init(entity: *Entity, pos: mtx.Vector, direction: f32) void {
     entity.inner = .{ .attack_purple = .{} };
     const this = &entity.inner.attack_purple;
 
-    entity.flags = .{ .alive = true, .enemy_kind = .green };
+    entity.flags = .{ .alive = true, .hurt_player = .always };
     entity.body = .initCircle(pos, &this.points, 16, 3);
     entity.body.speed = mtx.Vector.init(2, 0, 0).rotateZ(direction);
 

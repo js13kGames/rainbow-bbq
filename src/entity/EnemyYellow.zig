@@ -28,7 +28,7 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .enemy_yellow = .{} };
     const this = &entity.inner.enemy_yellow;
 
-    entity.flags = .{ .alive = true, .enemy_kind = .yellow };
+    entity.flags = .{ .alive = true, .enemy_kind = .yellow, .hurt_player = .regular };
     entity.body = .initCircle(pos, &this.points, 24, 12);
 
     entity.vtable = .{
@@ -69,14 +69,19 @@ pub fn update(entity: *Entity) void {
         .launch => {
             if (entity.body.isGrounded()) {
                 this.state = .plugged;
+                entity.flags.hurt_player = .always;
                 if (Entity.findFree()) |slot| {
-                    Entity.Hitbox.init(slot, entity.body.position, attack_time, attack_radius);
+                    Entity.Hitbox.init(slot, entity.body.position, attack_time, attack_radius, 4);
                     this.time = 0;
                 }
             }
         },
 
         .plugged => {
+            if (this.time >= attack_time) {
+                entity.flags.hurt_player = .regular;
+            }
+
             if (this.time == attack_time + stuck_time) {
                 this.state = .approach;
                 entity.body.speed = .init(0, 0, 2);

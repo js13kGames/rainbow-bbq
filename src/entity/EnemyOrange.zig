@@ -23,7 +23,7 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .enemy_orange = .{} };
     const this = &entity.inner.enemy_orange;
 
-    entity.flags = .{ .alive = true, .enemy_kind = .orange };
+    entity.flags = .{ .alive = true, .enemy_kind = .orange, .hurt_player = .regular };
     entity.body = .initCircle(pos, &this.points, 17, 11);
 
     entity.vtable = .{
@@ -44,6 +44,7 @@ pub fn update(entity: *Entity) void {
         entity.body.speed.v[1] = 0;
         this.hidden_time += 1;
         if (this.hidden_time == max_hide_time or player_distance > hide_distance) {
+            entity.flags.hurt_player = .regular;
             this.hidden = false;
             this.wander_time = 0;
         }
@@ -62,6 +63,7 @@ pub fn update(entity: *Entity) void {
         // Hide if near the player
         if (this.hidden_time == 0 and player_distance < hide_distance) {
             this.hidden = true;
+            entity.flags.hurt_player = .always;
         }
     }
 

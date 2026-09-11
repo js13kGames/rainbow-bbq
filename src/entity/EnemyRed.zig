@@ -22,7 +22,7 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .enemy_red = .{} };
     const this = &entity.inner.enemy_red;
 
-    entity.flags = .{ .alive = true, .enemy_kind = .red };
+    entity.flags = .{ .alive = true, .enemy_kind = .red, .hurt_player = .regular };
     entity.body = .initCircle(pos, &this.points, 8, 8);
 
     entity.vtable = .{
