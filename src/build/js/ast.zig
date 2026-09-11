@@ -151,6 +151,7 @@ pub const Statement = union(enum) {
     @"if": IfStmnt,
     throw: ThrowStmnt,
     @"try": TryStmnt,
+    @"return": ?Expression,
 };
 
 pub const BlockStmnt = struct {
@@ -259,6 +260,12 @@ pub fn Walker(comptime Context: type) type {
                         var block = Statement{ .block = node_c.* };
                         this.statement(&block);
                         node_c.* = block.block;
+                    }
+                },
+
+                .@"return" => |*node| {
+                    if (node.*) |*expr| {
+                        this.expression(expr);
                     }
                 },
             }

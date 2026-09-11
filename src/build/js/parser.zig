@@ -85,6 +85,7 @@ const Parser = struct {
             .@"if" => try this.parseStmntIf(),
             .throw => try this.parseStmntThrow(),
             .@"try" => try this.parseStmntTry(),
+            .@"return" => try this.parseStmntReturn(),
 
             // Must've been an expression then!
             else => blk: {
@@ -241,6 +242,17 @@ const Parser = struct {
             .op = operation,
             .subject = try this.allocNode(previous),
         } };
+    }
+
+    fn parseStmntReturn(this: *Parser) Error!ast.Statement {
+        this.nextExpect(.@"return");
+        if (this.nextMaybe(.semicolon)) |_| {
+            return .{ .@"return" = null };
+        }
+
+        const expr = try this.parseExpression();
+        this.nextExpect(.semicolon);
+        return .{ .@"return" = expr };
     }
 
     fn parseStmntThrow(this: *Parser) Error!ast.Statement {

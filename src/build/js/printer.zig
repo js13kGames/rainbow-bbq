@@ -65,6 +65,14 @@ const Printer = struct {
                     try this.printStatement(.{ .block = finally }, false);
                 }
             },
+            .@"return" => |node| {
+                try this.w.writeAll("return");
+                if (node) |expr| {
+                    if (isNextIdentifier(&expr)) try this.w.writeByte(' ');
+                    try this.printExpression(expr, null);
+                }
+                if (!is_last) try this.w.writeByte(';');
+            },
         }
     }
 
@@ -185,7 +193,7 @@ const Printer = struct {
     }
 };
 
-fn isNextIdentifier(expr: *ast.Expression) bool {
+fn isNextIdentifier(expr: *const ast.Expression) bool {
     return switch (expr.*) {
         .identifier => true,
         .number => true,
