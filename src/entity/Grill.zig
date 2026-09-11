@@ -86,7 +86,7 @@ pub fn draw(entity: *const Entity) void {
 
 const EnemySpriteDesc = struct {
     spr: *const Sprite,
-    color: [4]u8,
+    color: u32,
 
     pub fn fromAtlas(sprite: anytype) EnemySpriteDesc {
         return .{
@@ -128,7 +128,7 @@ pub fn drawSpear(pos: mtx.Vector, angle: [3]f32, content: []const Entity.EnemyKi
         var desc: render.QuadDescriptor = .{
             .size = .{ 20, 20 },
             .color_back = t.color,
-            .color_fore = .{ 0, 0, 0, 255 },
+            .color_fore = render.buildColor(.{ 0, 0, 0, 255 }),
             .pos = .{ mpos.v[0], mpos.v[1], mpos.v[2] },
             .rot = .{ angle[0] + mr, mr, mr },
         };

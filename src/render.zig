@@ -14,6 +14,10 @@ pub var matrix_stack: std.ArrayList(mtx.Matrix) = .initBuffer(&matrix_storage);
 var vertex_storage: [0x1000 * 6]js.Vertex = undefined;
 pub var vertex_buffer: std.ArrayList(js.Vertex) = .initBuffer(&vertex_storage);
 
+pub fn buildColor(rgba: [4]u8) u32 {
+    return @bitCast(rgba);
+}
+
 pub var camera: Camera = Camera{
     .z_near = 1,
     .z_far = std.math.inf(f32),
@@ -26,8 +30,8 @@ pub const QuadDescriptor = struct {
     origin: [2]f32 = .{ 0.5, 0.5 },
     pos: [3]f32 = .{ 0, 0, 0 },
     rot: [3]f32 = .{ 0, 0, 0 },
-    color_back: [4]u8 = .{ 0, 255, 0, 255 },
-    color_fore: [4]u8 = .{ 255, 0, 0, 255 },
+    color_back: u32 = buildColor(.{ 0, 255, 0, 255 }),
+    color_fore: u32 = buildColor(.{ 255, 0, 0, 255 }),
 
     pub inline fn fromAtlas(comptime spr: anytype, mods: anytype) QuadDescriptor {
         const desc: QuadDescriptor = .{
@@ -221,7 +225,7 @@ fn drawNumberInner(pos: *mtx.Vector, number: usize, t: *const TextDrawDescriptor
     pos.v[0] += 8 * t.scale;
 }
 
-pub fn drawPolygon2D(polygon: *const collision.Polygon, color: [4]u8) void {
+pub fn drawPolygon2D(polygon: *const collision.Polygon, color: u32) void {
     const spr = Sprite.white.spr;
 
     // Draw sum quads

@@ -37,7 +37,7 @@ pub fn draw(entity: *const Entity) void {
     _ = this;
 }
 
-pub fn drawRing(time: usize, num_points: usize, pos: mtx.Vector, radius: f32, ring_thickness: f32, color: [4]u8) void {
+pub fn drawRing(time: usize, num_points: usize, pos: mtx.Vector, radius: f32, ring_thickness: f32, color: u32) void {
     // Draw surrounding ring
     const time_offset: f32 = @as(f32, @floatFromInt(time)) / 100.0;
     const step = std.math.tau / @as(f32, @floatFromInt(num_points));
@@ -55,7 +55,7 @@ pub fn drawRing(time: usize, num_points: usize, pos: mtx.Vector, radius: f32, ri
     }
 }
 
-fn buildRingVert(angle: f32, distance: f32, pos: mtx.Vector, color: [4]u8) render.Vertex {
+fn buildRingVert(angle: f32, distance: f32, pos: mtx.Vector, color: u32) render.Vertex {
     const spr = Sprite.white.spr;
     return .{
         .pos = render.transformVector(pos.add4((mtx.Vector{ .v = .{ distance, 0, 1, 0 } }).rotateZ(angle))),

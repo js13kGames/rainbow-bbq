@@ -290,8 +290,8 @@ pub fn main(init: std.process.Init) !void {
         \\}
         \\
         \\pub const Colors = struct {
-        \\    back: [4]u8,
-        \\    fore: [4]u8,
+        \\    back: u32,
+        \\    fore: u32,
         \\};
         \\
         \\const _list = [_]Sprite{
@@ -410,19 +410,13 @@ const OutWriter = struct {
                 try this.structured.writeAll("pub const colors = Colors{\n");
 
                 for (0..depth + 2) |_| try this.structured.writeAll("    ");
-                try this.structured.print(".back = .{{ {}, {}, {}, {} }},\n", .{
-                    colors[0][0],
-                    colors[0][1],
-                    colors[0][2],
-                    colors[0][3],
+                try this.structured.print(".back = {},\n", .{
+                    @as(u32, @bitCast(colors[0])),
                 });
 
                 for (0..depth + 2) |_| try this.structured.writeAll("    ");
-                try this.structured.print(".fore = .{{ {}, {}, {}, {} }},\n", .{
-                    colors[1][0],
-                    colors[1][1],
-                    colors[1][2],
-                    colors[1][3],
+                try this.structured.print(".fore = {},\n", .{
+                    @as(u32, @bitCast(colors[1])),
                 });
 
                 for (0..depth + 1) |_| try this.structured.writeAll("    ");
@@ -442,19 +436,13 @@ const OutWriter = struct {
                 try this.structured.writeAll(".{\n");
 
                 for (0..depth + 3) |_| try this.structured.writeAll("    ");
-                try this.structured.print(".back = .{{ {}, {}, {}, {} }},\n", .{
-                    colors[0][0],
-                    colors[0][1],
-                    colors[0][2],
-                    colors[0][3],
+                try this.structured.print(".back = {},\n", .{
+                    @as(u32, @bitCast(colors[0])),
                 });
 
                 for (0..depth + 3) |_| try this.structured.writeAll("    ");
-                try this.structured.print(".fore = .{{ {}, {}, {}, {} }},\n", .{
-                    colors[1][0],
-                    colors[1][1],
-                    colors[1][2],
-                    colors[1][3],
+                try this.structured.print(".fore = {},\n", .{
+                    @as(u32, @bitCast(colors[1])),
                 });
 
                 for (0..depth + 2) |_| try this.structured.writeAll("    ");

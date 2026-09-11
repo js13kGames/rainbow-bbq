@@ -13,8 +13,8 @@ pub inline fn log(log_level: std.log.Level, str: []const u8) void {
 pub const Vertex = extern struct {
     pos: [4]f32,
     uv: [2]f32,
-    color_back: [4]u8,
-    color_fore: [4]u8,
+    color_back: u32,
+    color_fore: u32,
 };
 
 pub inline fn draw(vertices: []const Vertex) void {
