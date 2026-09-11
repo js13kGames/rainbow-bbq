@@ -40,6 +40,8 @@ export fn a() void {
 
     Entity.initAll();
     Entity.Player.init(Entity.findFree().?, .init(0, 0, 1));
+    Entity.Grill.init(Entity.findFree().?, .init(0, 0, 1));
+
     Entity.EnemyRed.init(Entity.findFree().?, .init(100, 100, 0));
     Entity.EnemyYellow.init(Entity.findFree().?, .init(0, -500, 0));
     Entity.EnemyGreen.init(Entity.findFree().?, .init(0, 500, 0));
@@ -91,11 +93,13 @@ export fn b() void {
         defer render.popMatrix();
 
         // Ok now draw a sprite
-        const horn_sprite = Sprite.horn;
-        render.drawQuad(horn_sprite.spr, .fromAtlas(horn_sprite, .{
-            .pos = .{ 12, 105, 0 },
-            .rot = .{ std.math.pi / 2.0, 0, 0 },
-        }));
+        const player = &Entity.Player.player.inner.player;
+        const content: []const Entity.EnemyKind = player.speared[0..player.num_speared];
+        Entity.Grill.drawSpear(
+            .init(12, 105, 0),
+            .{ std.math.pi / 2.0, 0, 0 },
+            content,
+        );
 
         render.flush();
     }

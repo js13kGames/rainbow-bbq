@@ -17,6 +17,13 @@ particle_tick: usize = 0,
 hp: usize = 3,
 invuln_timer: usize = 0,
 
+speared: [6]Entity.EnemyKind = undefined,
+num_speared: usize = 0,
+
+score: usize = 0,
+score_multiply: usize = 1,
+score_multiply_timer: usize = 0,
+
 /// Singleton instance
 pub var player: *Entity = undefined;
 
@@ -70,7 +77,15 @@ pub fn update(entity: *Entity) void {
         // Ok, how do we handle this?
         if (this.charging and other.flags.hurt_player == .regular) {
             other.flags.alive = false;
+
+            this.score += 100 * this.score_multiply;
+
+            if (this.num_speared < 6) {
+                this.speared[this.num_speared] = other.flags.enemy_kind.?;
+                this.num_speared += 1;
+            } else {
             std.log.info("kill {}", .{std.meta.activeTag(other.inner)});
+            }
         } else if (this.invuln_timer == 0) {
             this.hp -= 1;
             this.invuln_timer = invuln_time;
@@ -83,8 +98,8 @@ pub fn update(entity: *Entity) void {
         entity.body.speed = mtx.Vector.init(0, charge_speed_init, 0).rotateZ(render.camera.yaw_rad);
 
         // Spawn sum particles
-        for (0..12) |_| {
-            spawnParticle(entity, 1);
+        for (0..18) |_| {
+            spawnParticle(entity, 1.5);
         }
     }
 

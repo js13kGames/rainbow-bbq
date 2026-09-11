@@ -12,6 +12,8 @@ pub const Particle = @import("entity/Particle.zig");
 pub const Hitbox = @import("entity/Hitbox.zig");
 pub const AttackPurple = @import("entity/AttackPurple.zig");
 
+pub const Grill = @import("entity/Grill.zig");
+
 const collision = @import("collision.zig");
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
@@ -69,6 +71,8 @@ inner: union(enum) {
     particle: Particle,
     hitbox: Hitbox,
     attack_purple: AttackPurple,
+
+    grill: Grill,
 },
 
 pub var all: [1024]Entity = undefined;
