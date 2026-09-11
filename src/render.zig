@@ -17,7 +17,7 @@ pub var vertex_buffer: std.ArrayList(js.Vertex) = .initBuffer(&vertex_storage);
 pub var camera: Camera = Camera{
     .z_near = 1,
     .z_far = std.math.inf(f32),
-    .pitch_rad = -0.7,
+    .pitch_rad = -0.4,
     .position = .{ .v = .{ 20, -20, 40, 0 } },
 };
 
@@ -151,6 +151,76 @@ pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
     });
 }
 
+pub const TextDrawDescriptor = struct {
+    pos: mtx.Vector = .init(0, 0, 0),
+    colors: Sprite.Colors = .{
+        .back = .{ 0, 0, 0, 255 },
+        .fore = .{ 255, 255, 255, 255 },
+    },
+    centered: bool = false,
+    scale: f32 = 1,
+};
+
+pub fn drawText(text: []const u8, t: TextDrawDescriptor) void {
+    var pos = t.pos;
+    if (t.centered) {
+        pos.v[0] -= 4.0 * @as(f32, @floatFromInt(text.len));
+    }
+
+    for (text, 0..) |char, i| {
+        const glyph = switch (char) {
+            '0'...'9' => char - '0',
+            'A'...'Z' => char - ('A' - 10),
+            'a'...'z' => char - ('a' - 10),
+
+            else => continue,
+        };
+
+        const spr = Sprite.font.spr.frame(glyph);
+        var bp = pos;
+        bp.v[0] += @as(f32, @floatFromInt(i)) * 8.0 * t.scale;
+
+        drawQuad(spr, .{
+            .size = .{ 8 * t.scale, 8 * t.scale },
+            .color_back = t.colors.back,
+            .color_fore = t.colors.fore,
+            .origin = .{ 0, 1 },
+            .rot = .{ std.math.pi / 2.0, 0, 0 },
+            .pos = .{ bp.v[0], bp.v[1], bp.v[2] },
+        });
+    }
+}
+
+pub inline fn drawNumber(number: usize, t: TextDrawDescriptor) void {
+    var p = t.pos;
+    if (t.centered) {
+        p.v[0] -= 4.0 * @as(f32, @floatFromInt(numberStrLen(number))) * t.scale;
+    }
+
+    drawNumberInner(&p, number, &t);
+}
+
+fn drawNumberInner(pos: *mtx.Vector, number: usize, t: *const TextDrawDescriptor) void {
+    const div = number / 10;
+    const rem = number % 10;
+
+    if (div != 0) {
+        drawNumberInner(pos, div, t);
+    }
+
+    const spr = Sprite.font.spr.frame(rem);
+    drawQuad(spr, .{
+        .size = .{ 8 * t.scale, 8 * t.scale },
+        .color_back = t.colors.back,
+        .color_fore = t.colors.fore,
+        .origin = .{ 0, 1 },
+        .rot = .{ std.math.pi / 2.0, 0, 0 },
+        .pos = .{ pos.v[0], pos.v[1], pos.v[2] },
+    });
+
+    pos.v[0] += 8 * t.scale;
+}
+
 pub fn drawPolygon2D(polygon: *const collision.Polygon, color: [4]u8) void {
     const spr = Sprite.white.spr;
 
@@ -282,6 +352,19 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         verts[2] = vert;
         p1 = verts[2];
     }
+}
+
+fn numberStrLen(num: usize) usize {
+    if (num == 0) return 1;
+
+    var i: usize = 0;
+    var n = num;
+    while (n != 0) {
+        i += 1;
+        n = n / 10;
+    }
+
+    return i;
 }
 
 fn currentMatrix() *const mtx.Matrix {
