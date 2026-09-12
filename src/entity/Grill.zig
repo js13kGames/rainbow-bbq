@@ -37,8 +37,10 @@ pub fn update(entity: *Entity) void {
         // Take stuff off the grill
         if (this.content) |content| {
             if (this.time >= grill_time) {
-                std.log.info("took stuff off the grill {any}", .{content});
                 this.content = null;
+                if (Entity.findFree()) |result| {
+                    Entity.GrillResult.init(result, content);
+                }
             }
         }
 
@@ -80,7 +82,12 @@ pub fn draw(entity: *const Entity) void {
     }
 
     if (this.content) |content| {
-        drawSpear(entity.body.position.add3(.init(0, 0, 30)), .{ 0, std.math.pi / 2.0, std.math.pi / 2.0 }, &content);
+        drawSpear(
+            entity.body.position.add3(.init(0, 0, 30)),
+            .{ 0, std.math.pi / 2.0, std.math.pi / 2.0 },
+            &content,
+            0,
+        );
     }
 }
 
@@ -96,7 +103,7 @@ const EnemySpriteDesc = struct {
     }
 };
 
-const sprite_map = std.EnumArray(Entity.EnemyKind, EnemySpriteDesc).init(.{
+pub const sprite_map = std.EnumArray(Entity.EnemyKind, EnemySpriteDesc).init(.{
     .red = .fromAtlas(Sprite.enemy_red),
     .green = .fromAtlas(Sprite.enemy_green),
     .blue = .fromAtlas(Sprite.enemy_blue),
@@ -105,32 +112,43 @@ const sprite_map = std.EnumArray(Entity.EnemyKind, EnemySpriteDesc).init(.{
     .orange = .fromAtlas(Sprite.enemy_orange),
 });
 
-// TODO: grill spear
-pub fn drawSpear(pos: mtx.Vector, angle: [3]f32, content: []const Entity.EnemyKind) void {
+pub fn drawSpear(pos: mtx.Vector, angle: [3]f32, content: []const Entity.EnemyKind, content_angle: f32) void {
     const horn_sprite = Sprite.horn;
 
-    var horn_desc: render.QuadDescriptor = .fromAtlas(horn_sprite, .{
-        .pos = .{ pos.v[0], pos.v[1], pos.v[2] },
-        .rot = angle,
-    });
+    var matrix = mtx.Matrix{};
+    _ = matrix
+        .translate(pos.v[0], pos.v[1], pos.v[2])
+        .rotateZ(angle[2])
+        .rotateX(angle[0])
+        .rotateY(angle[1]);
+    render.pushMatrix(&matrix);
+    defer render.popMatrix();
+
+    var horn_desc: render.QuadDescriptor = .fromAtlas(horn_sprite, .{});
     render.drawQuad(horn_sprite.spr, horn_desc);
 
-    // horn_desc.rot[0] += std.math.pi;
-    horn_desc.rot[1] += std.math.pi;
     horn_desc.rot[2] += std.math.pi;
     render.drawQuad(horn_sprite.spr, horn_desc);
+
+    var matrix2 = mtx.Matrix{};
+    _ = matrix2
+        .rotateZ(std.math.pi / 2.0)
+        .rotateX(-std.math.pi / 2.0);
+
+    render.pushMatrix(&matrix2);
+    defer render.popMatrix();
 
     for (content, 0..) |item, i| {
         const t = sprite_map.get(item);
         const mr = std.math.pi / 16.0;
-        const mpos = pos.add4(.init(0, 20 - @as(f32, @floatFromInt(i * 8)), 0));
+        const mpos = mtx.Vector.init(0, 20 - @as(f32, @floatFromInt(i * 8)), 0);
 
         var desc: render.QuadDescriptor = .{
             .size = .{ 20, 20 },
             .color_back = t.color,
             .color_fore = render.buildColor(.{ 0, 0, 0, 255 }),
             .pos = .{ mpos.v[0], mpos.v[1], mpos.v[2] },
-            .rot = .{ angle[0] + mr, mr, mr },
+            .rot = .{ mr, mr, mr + content_angle },
         };
         render.drawQuad(t.spr, desc);
 

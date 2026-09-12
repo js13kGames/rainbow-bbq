@@ -13,18 +13,19 @@ pub const Hitbox = @import("entity/Hitbox.zig");
 pub const AttackPurple = @import("entity/AttackPurple.zig");
 
 pub const Grill = @import("entity/Grill.zig");
+pub const GrillResult = @import("entity/GrillResult.zig");
 
 const collision = @import("collision.zig");
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
 
-pub const EnemyKind = enum {
-    red,
-    yellow,
-    blue,
-    green,
-    orange,
-    purple,
+pub const EnemyKind = enum(u8) {
+    red = 5,
+    orange = 4,
+    yellow = 3,
+    green = 2,
+    blue = 1,
+    purple = 0,
 };
 
 pub const Flags = struct {
@@ -73,6 +74,7 @@ inner: union(enum) {
     attack_purple: AttackPurple,
 
     grill: Grill,
+    grill_result: GrillResult,
 },
 
 pub var all: [1024]Entity = undefined;

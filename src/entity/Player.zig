@@ -23,6 +23,7 @@ num_speared: usize = 0,
 score: usize = 0,
 score_multiply: usize = 1,
 score_multiply_timer: usize = 0,
+score_gain: usize = 0,
 
 dead: bool = false,
 
@@ -67,10 +68,18 @@ const rainbow_colors = [_]Sprite.Colors{
 
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
+
     if (!this.dead) {
 
-        // Hurt stuff
+        // Timer stuff
         if (this.invuln_timer != 0) this.invuln_timer -= 1;
+        if (this.score_gain != 0) this.score_gain -= 1;
+        if (this.score_multiply_timer != 0) {
+            this.score_multiply_timer -= 1;
+            if (this.score_multiply_timer == 0) {
+                this.score_multiply = 1;
+            }
+        }
 
         // Collide with enemies
         for (&Entity.all) |*other| {
@@ -81,7 +90,8 @@ pub fn update(entity: *Entity) void {
             if (this.charging and other.flags.hurt_player == .regular) {
                 other.flags.alive = false;
 
-                this.score += 100 * this.score_multiply;
+                this.score += 10 * this.score_multiply;
+                this.score_gain = 15;
 
                 if (this.num_speared < 6) {
                     this.speared[this.num_speared] = other.flags.enemy_kind.?;
