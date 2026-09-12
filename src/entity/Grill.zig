@@ -12,7 +12,7 @@ time: usize = 0,
 content: ?[6]Entity.EnemyKind = null,
 
 const radius: f32 = 30;
-const grill_time: usize = 60 * 6;
+const grill_time: usize = 60 * 10;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .grill = .{} };
@@ -31,27 +31,23 @@ pub fn update(entity: *Entity) void {
     const this = &entity.inner.grill;
     this.time += 1;
 
-    if (collision.shapeOverlapSAT(&entity.body.shape, &Entity.Player.player.body.shape) != null) {
-        const player = &Entity.Player.player.inner.player;
+    const player = &Entity.Player.player.inner.player;
 
-        // Take stuff off the grill
-        if (this.content) |content| {
-            if (this.time >= grill_time) {
-                this.content = null;
-                if (Entity.findFree()) |result| {
-                    Entity.GrillResult.init(result, content);
-                }
+    // Take stuff off the grill
+    if (this.content == null) {
+        if (collision.shapeOverlapSAT(&entity.body.shape, &Entity.Player.player.body.shape) != null and player.num_speared == 6) {
+            this.content = player.speared;
+            player.num_speared = 0;
+            this.time = 0;
+            if (Entity.findFree()) |result| {
+                Entity.GrillResult.init(result, player.speared);
             }
         }
+    }
 
-        // Put stuff onto the grill
-        else {
-            if (player.num_speared == 6) {
-                this.content = player.speared;
-                player.num_speared = 0;
-                this.time = 0;
-            }
-        }
+    // Put stuff onto the grill
+    else if (this.time >= grill_time) {
+        this.content = null;
     }
 }
 
