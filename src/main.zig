@@ -26,6 +26,15 @@ pub const std_options = std.Options{
     }.inner,
 };
 
+const enemy_initfn = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
+    Entity.EnemyRed.init,
+    Entity.EnemyOrange.init,
+    Entity.EnemyYellow.init,
+    Entity.EnemyGreen.init,
+    Entity.EnemyBlue.init,
+    Entity.EnemyPurple.init,
+};
+
 /// This is the "initial" function
 export fn a() void {
     // Ensure there is always a unit matrix at the bottom of the stack
@@ -47,12 +56,17 @@ pub fn restart() void {
     Entity.Player.init(Entity.findFree().?, .init(0, 0, 1));
     Entity.Grill.init(Entity.findFree().?, .init(0, 0, 1));
 
-    Entity.EnemyRed.init(Entity.findFree().?, .init(100, 100, 0));
-    Entity.EnemyYellow.init(Entity.findFree().?, .init(0, -500, 0));
-    Entity.EnemyGreen.init(Entity.findFree().?, .init(0, 500, 0));
-    Entity.EnemyOrange.init(Entity.findFree().?, .init(200, 0, 0));
-    Entity.EnemyPurple.init(Entity.findFree().?, .init(-200, 0, 0));
-    Entity.EnemyBlue.init(Entity.findFree().?, .init(-200, 0, 0));
+    for (0..24) |_| {
+        const enemy_idx = js.irandom(enemy_initfn.len);
+        const pos = mtx.Vector.init(
+            js.frandom(1000) - 500,
+            js.frandom(1000) - 500,
+            0,
+        );
+
+        const entity = Entity.findFree().?;
+        enemy_initfn[enemy_idx](entity, pos);
+    }
 }
 
 /// This is the main entrypoint
@@ -60,10 +74,11 @@ export fn b() void {
     js.input.update();
 
     // Render main game world
-    {
-        for (&Entity.all) |*entity| entity.update();
+    for (&Entity.all) |*entity| entity.update();
 
-        // Update done, now set camera matrix
+    // Update done, now begin rendering
+    {
+        // Set camera matrix
         const matrix = render.camera.getMatrix();
         render.pushMatrix(&matrix);
         defer render.popMatrix();
