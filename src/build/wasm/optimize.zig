@@ -173,6 +173,7 @@ const Error = error{} || std.Io.Writer.Error;
 const CodeOptimizer = struct {
     w: *std.Io.Writer,
     num_globals: u32,
+    prev_instr: usize = 0,
 
     const Vi8x16 = @Vector(16, i8);
     const Vi16x8 = @Vector(8, i16);
@@ -193,6 +194,7 @@ const CodeOptimizer = struct {
 
     fn emitInstruction(this: *CodeOptimizer, instr_r: Module.Instruction) Error!void {
         const w = this.w;
+        this.prev_instr = this.w.end;
 
         switch (instr_r) {
             .page0 => |instr| {
@@ -268,6 +270,7 @@ const CodeOptimizer = struct {
     fn optimizeSimd(this: *CodeOptimizer, instr: Module.Instruction.Simd) Error!bool {
         return switch (instr.opcode) {
             .v128_const => try this.constVector(instr.operands.v128),
+            .i8x16_shuffle => try this.shuffle(instr.operands.v128),
 
             else => false,
         };
@@ -332,6 +335,14 @@ const CodeOptimizer = struct {
         return false;
     }
 
+    fn shuffle(this: *CodeOptimizer, val: [16]u8) Error!bool {
+        if (try this.optimizeShuffleExtract(Vi32x4, val)) return true;
+        if (try this.optimizeShuffleExtract(Vi16x8, val)) return true;
+        if (try this.optimizeShuffleExtract(Vi8x16, val)) return true;
+
+        return false;
+    }
+
     fn optimizeSplat(this: *CodeOptimizer, val: anytype) Error!bool {
         const Vec = @TypeOf(val);
 
@@ -382,6 +393,63 @@ const CodeOptimizer = struct {
         }
 
         return false;
+    }
+
+    fn optimizeShuffleExtract(this: *CodeOptimizer, Vec: type, val: [16]u8) Error!bool {
+        const vec_info = @typeInfo(Vec).vector;
+        const lane_indices = buildShuffleIndices(Vec, val) orelse return false;
+
+        // Are these all the same lane?
+        if (@reduce(.And, lane_indices == @as(Vec, @splat(lane_indices[0])))) {
+            this.w.end = this.prev_instr;
+
+            // Yes...
+            // Extract and row and splat
+            try this.emitInstruction(.{ .simd = .{
+                .opcode = switch (vec_info.child) {
+                    i8 => .i8x16_extract_lane_u,
+                    i16 => .i16x8_extract_lane_u,
+                    i32 => .i32x4_extract_lane,
+
+                    else => @compileError("unsupported vector element " ++ @typeName(vec_info.child)),
+                },
+                .operands = .{ .lane = @intCast(lane_indices[0]) },
+            } });
+            try this.emitInstruction(.{ .simd = .{
+                .opcode = switch (vec_info.child) {
+                    i8 => .i8x16_splat,
+                    i16 => .i16x8_splat,
+                    i32 => .i32x4_splat,
+
+                    else => @compileError("unsupported vector element " ++ @typeName(vec_info.child)),
+                },
+            } });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    fn buildShuffleIndices(Vec: type, val: [16]u8) ?Vec {
+        const vec_info = @typeInfo(Vec).vector;
+        const lane_size: usize = @sizeOf(vec_info.child);
+
+        var out: Vec = undefined;
+
+        inline for (0..vec_info.len) |lane| {
+            const first = val[lane * lane_size];
+            for (0..lane_size) |i| {
+                if (val[lane * lane_size + i] != first + i) {
+                    // Not of this size
+                    return null;
+                }
+            }
+
+            out[lane] = @intCast(@as(usize, @intCast(first)) / lane_size);
+        }
+
+        return out;
     }
 
     fn emitConst(this: *CodeOptimizer, val: anytype) Error!void {
