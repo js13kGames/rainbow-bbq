@@ -104,6 +104,7 @@ pub fn build(b: *std.Build) void {
         const minify_step = b.addRunArtifact(minify_exe);
         minify_step.addArtifactArg(game_exe);
         const minified_exe = minify_step.addOutputFileArg("game.min.wasm");
+        minify_step.addArg(if (optimize == .debug) "0" else "1");
 
         // Install minified file
         const install_minified = b.addInstallFileWithDir(minified_exe, dir, "0");

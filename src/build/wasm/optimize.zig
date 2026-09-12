@@ -2,7 +2,7 @@ const std = @import("std");
 
 const Module = @import("Module.zig");
 
-pub fn optimize(src: []const u8, w: *std.Io.Writer, gpa: std.mem.Allocator) !void {
+pub fn optimize(src: []const u8, w: *std.Io.Writer, gpa: std.mem.Allocator, minify_code: bool) !void {
     var r = std.Io.Reader.fixed(src);
 
     // Skip magic and version
@@ -118,6 +118,11 @@ pub fn optimize(src: []const u8, w: *std.Io.Writer, gpa: std.mem.Allocator) !voi
             },
 
             .code => {
+                if (!minify_code) {
+                    try w.writeLeb128(section.bytes.len);
+                    try w.writeAll(section.bytes);
+                    continue;
+                }
                 const num_globals: u32 = blk: {
                     const global_section = module.getSectionByType(.global) orelse break :blk 0;
                     var gr = std.Io.Reader.fixed(global_section.bytes);
