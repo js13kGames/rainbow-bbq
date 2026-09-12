@@ -35,10 +35,6 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.enemy_blue;
 
-    if (js.input.keys['E'].isPressed()) {
-        explode(entity.body.position);
-    }
-
     const player_distance = entity.distanceTo(Entity.Player.player);
     const player_direction = entity.directionTo(Entity.Player.player);
 
@@ -51,19 +47,7 @@ pub fn update(entity: *Entity) void {
 
     if (this.lit) {
         // Fuse particles
-        if (Entity.findFree()) |particle| {
-            const s: usize = 6 + js.irandom(4);
-            Entity.Particle.init(particle, .{
-                .sprite = Sprite.smoke.spr,
-                .colors = Sprite.enemy_blue.colors,
-                .pos = entity.body.position.add4(.init(0, 0, 12)),
-                .speed = mtx.Vector.init(js.frandom(0.2), 0, 0.2 + js.frandom(0.1)).rotateZ(js.frandom(std.math.tau)),
-                .w = s,
-                .h = s,
-                .time = 120,
-                .scale_delta = -0.01 - js.frandom(0.01),
-            });
-        }
+        spawnParticle(entity.body.position, 1);
 
         // When explosion starts, create hitbox
         if (this.time == attack_time - 5) {
@@ -74,7 +58,9 @@ pub fn update(entity: *Entity) void {
 
         // Create explosion particles
         if (this.time <= attack_time) {
-            explode(entity.body.position);
+            for (0..15) |_| {
+                spawnParticle(entity.body.position, 10);
+            }
         }
 
         if (this.time == 0) {
@@ -121,31 +107,29 @@ pub fn draw(entity: *const Entity) void {
     });
 }
 
-fn explode(pos: mtx.Vector) void {
+fn spawnParticle(pos: mtx.Vector, speed: f32) void {
     // Spawn 7 billion particles
-    for (0..15) |_| {
-        const particle = Entity.findFree() orelse break;
+    const particle = Entity.findFree() orelse return;
 
-        const particle_dir = js.frandom(std.math.tau);
-        const dist_rand = js.frandom(1);
-        const dist_norm = dist_rand * dist_rand * dist_rand;
+    const particle_dir = js.frandom(std.math.tau);
+    const dist_rand = js.frandom(1);
+    const dist_norm = dist_rand * dist_rand * dist_rand;
 
-        const unit = mtx.Vector.init(
-            1.0 - dist_norm + js.frandom(0.3),
-            0,
-            dist_norm * 0.5 + js.frandom(0.3),
-        ).rotateZ(particle_dir);
+    const unit = mtx.Vector.init(
+        1.0 - dist_norm + js.frandom(0.3),
+        0,
+        dist_norm * 0.5 + js.frandom(0.3),
+    ).rotateZ(particle_dir);
 
-        Entity.Particle.init(particle, .{
-            .sprite = Sprite.smoke.spr,
-            .colors = Sprite.enemy_blue.colors,
-            .pos = unit.mulScalar4(10.0).add4(pos),
-            .speed = unit.mulScalar4(7),
-            .speed_damp = .init(0.95, 0.9, 1),
-            .w = 16,
-            .h = 16,
-            .time = 120,
-            .scale_delta = -0.01 - js.frandom(0.01),
-        });
-    }
+    Entity.Particle.init(particle, .{
+        .sprite = Sprite.smoke.spr,
+        .colors = Sprite.enemy_blue.colors,
+        .pos = unit.mulScalar4(10.0).add4(pos),
+        .speed = unit.mulScalar4(speed),
+        .speed_damp = .init(0.95, 0.9, 1),
+        .w = 16,
+        .h = 16,
+        .time = 120,
+        .scale_delta = -0.01 - js.frandom(0.01),
+    });
 }
