@@ -8,7 +8,8 @@ const js = @import("../js.zig");
 
 content: [6]Entity.EnemyKind,
 time: usize = 0,
-prev_applied: usize = 0,
+prev_eaten: usize = 0,
+prev_content: usize = 6,
 
 const interval_time: usize = 15;
 
@@ -24,16 +25,22 @@ pub fn init(entity: *Entity, content: [6]Entity.EnemyKind) void {
 
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.grill_result;
+    const player = &Entity.Player.player.inner.player;
     this.time += 1;
 
-    _, const eaten = this.getSpearAndEaten();
+    const content, const eaten = this.getSpearAndEaten();
     const num_eaten: usize = @popCount(eaten.bits.mask);
-    if (num_eaten != this.prev_applied) {
-        this.prev_applied = num_eaten;
+    if (num_eaten != this.prev_eaten) {
+        this.prev_eaten = num_eaten;
 
-        const player = &Entity.Player.player.inner.player;
         player.score_multiply *= 2;
         player.score_multiply_timer = 660;
+    }
+
+    if (this.prev_content != content.len) {
+        this.prev_content = content.len;
+
+        player.charge += 0.10;
     }
 
     if (this.time >= 40 + interval_time * 6 + 60) {

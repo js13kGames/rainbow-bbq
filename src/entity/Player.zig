@@ -123,9 +123,16 @@ pub fn update(entity: *Entity) void {
         var speed_max = speed_max_regular;
         this.charging = js.input.keys[js.input.key_shift].isHeld();
         if (this.charging) {
+            this.charge = @max(0, this.charge - 0.003);
+            if (this.charge == 0) {
+                this.charging = false;
+            } else {
             spawnParticle(entity, 0.3);
             speed_accel = speed_accel_charge;
             speed_max = speed_max_charge;
+            }
+        } else {
+            this.charge = @min(1, this.charge + 0.002);
         }
 
         // Prepare movement

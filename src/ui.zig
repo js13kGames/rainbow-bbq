@@ -59,13 +59,23 @@ fn drawGameplay(player: *const Entity.Player) void {
     render.drawText("HP", .{ .pos = .init(160 - 8 * 4, 0, 0) });
     render.drawNumber(player.hp, .{ .pos = .init(160 - 8, 0, 0) });
 
-    // Bleh...
+    // Draw grill results
     for (&Entity.all) |*entity| {
         if (entity.flags.alive) switch (entity.inner) {
             .grill_result => |*grill_result| grill_result.drawGUI(),
             else => {},
         };
     }
+
+    // Draw charge bar
+    render.drawQuad(Sprite.white.spr, .{
+        .size = .{ 7, 55 * player.charge },
+        .origin = .{ 0, 0 },
+        .pos = .{ 147, 132, 0 },
+        .color_back = 0xFFFF_FFFF,
+        .color_fore = 0xFFFF_FFFF,
+        .rot = .{ std.math.pi / 2.0, 0, 0 },
+    });
 }
 
 fn drawGameover(player: *const Entity.Player) void {
