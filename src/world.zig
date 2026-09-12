@@ -111,10 +111,10 @@ const texture_table = [_]ShapeTexture{
         .top = .{ .sprite = Sprite.grass.spr, .colors = Sprite.grass.colors },
         .side = .{ .sprite = Sprite.pillar.spr, .colors = Sprite.pillar.colors },
     },
-    // pillar + pillar
+    // Invisible
     .{
-        .top = .{ .sprite = Sprite.pillar.spr, .colors = Sprite.pillar.colors },
-        .side = .{ .sprite = Sprite.pillar.spr, .colors = darkenColorPair(Sprite.pillar.colors) },
+        .top = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = 0, .back = 0 } },
+        .side = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = 0, .back = 0 } },
     },
 };
 
@@ -197,13 +197,12 @@ pub noinline fn init() void {
 }
 
 const img_width: f32 = 64;
-const level_size: f32 = 1500;
+pub const level_size: f32 = 1500;
 const coord_scale: f32 = level_size / img_width;
-const coord_offset: f32 = level_size / 2.0;
 
 fn readPos(r: *std.Io.Reader) @Vector(2, f32) {
     return .{
-        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale - coord_scale,
-        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale - coord_offset,
+        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale,
+        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale,
     };
 }

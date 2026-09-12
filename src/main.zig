@@ -81,10 +81,54 @@ export fn b() void {
         // Render entities
         for (&Entity.all) |*entity| entity.draw();
 
+        drawFence();
+
         // World pass done
         render.flush();
     }
 
     // Render UI
     ui.run();
+}
+
+const w: f32 = world.level_size;
+const num_fences = @as(usize, @trunc(w)) / (Sprite.fence.w * 2) + 1;
+const fence_w: f32 = (w) / @as(f32, @floatFromInt(num_fences));
+
+fn drawFence() void {
+    const spr = Sprite.fence.spr;
+    const color = Sprite.fence.colors;
+
+    for (0..4) |i| {
+        var matrix = mtx.Matrix{};
+        _ = matrix
+            .translate(w / 2.0, w / 2.0, 0)
+            .rotateZ(@as(f32, @floatFromInt(i)) * std.math.pi / 2.0)
+            .translate(-w / 2.1, w / 2.1, 0);
+
+        render.pushMatrix(&matrix);
+        defer render.popMatrix();
+
+        for (0..num_fences) |j| {
+            const verts = render.vertex_buffer.addManyAsSliceAssumeCapacity(6);
+
+            for (0..4) |k| {
+                const xi = k % 2;
+                const yi = k / 2;
+
+                const x: f32 = @as(f32, @floatFromInt(xi + j)) * fence_w;
+                const y: f32 = @as(f32, @floatFromInt(yi)) * Sprite.fence.h;
+
+                verts[k] = .{
+                    .pos = render.transformVector(mtx.Vector.init(x, 0, y)),
+                    .uv = .{ spr.u[1 - xi], spr.v[1 - yi] },
+                    .color_fore = color.fore,
+                    .color_back = color.back,
+                };
+            }
+
+            verts[4] = verts[2];
+            verts[5] = verts[1];
+        }
+    }
 }
