@@ -53,24 +53,15 @@ pub fn update(entity: *Entity) void {
     if (this.time == 62 * 7) {
         const player_position = Entity.Player.player.body.position;
 
-        for (0..50) |_| {
-            this.time = 0;
+        this.time = 0;
 
-            const direction = js.frandom(std.math.tau);
-            const distance = js.frandom(100) + 150;
-            const new_pos = mtx.Vector.init(distance, 0, 0).rotateZ(direction).add2(player_position);
+        const direction = js.frandom(std.math.tau);
+        const distance = js.frandom(100) + 150;
+        const new_pos = mtx.Vector.init(distance, 0, 0).rotateZ(direction).add2(player_position);
 
-            // TODO: validate world bounds
+        // TODO: validate world bounds
 
-            entity.body = .initCircle(new_pos, &this.points, height, radius);
-
-            // Move upwards
-            const col = collision.collideWithWorld(&entity.body.shape) orelse break;
-            const height_diff = @abs(player_position.v[0] - col.floor);
-            entity.body.shape.move(.init(0, 0, col.floor));
-
-            if (height_diff < 150) break;
-        }
+        entity.body = .initCircle(new_pos, &this.points, height, radius);
 
         // Spawn particles
         spawnParticles(entity.body.position);
