@@ -5,6 +5,7 @@ const js = @import("js.zig");
 const mtx = @import("mtx.zig");
 const Camera = @import("camera.zig").CameraPerspective;
 const collision = @import("collision.zig");
+const world = @import("world.zig");
 
 pub const Vertex = js.Vertex;
 
@@ -259,23 +260,23 @@ pub fn drawPolygon2D(polygon: *const collision.Polygon, color: u32) void {
     }
 }
 
-pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
-    const wall = Sprite.wall;
-    const spr = wall.spr;
+pub fn drawPolygon3D(polygon: *const collision.Polygon, texture: *const world.ShapeTexture) void {
+    const top = texture.top;
+    const side = texture.side;
 
     // Draw walls first
     const last_point = polygon.points[polygon.points.len - 1];
     var vert_00 = Vertex{
         .pos = transformVector(mtx.Vec4{ last_point[0], last_point[1], polygon.z_max, 1 }),
-        .uv = .{ spr.u[0], spr.v[0] },
-        .color_back = wall.colors.back,
-        .color_fore = wall.colors.fore,
+        .uv = .{ side.sprite.u[0], side.sprite.v[0] },
+        .color_back = side.colors.back,
+        .color_fore = side.colors.fore,
     };
     var vert_01 = Vertex{
         .pos = transformVector(mtx.Vec4{ last_point[0], last_point[1], polygon.z_min, 1 }),
-        .uv = .{ spr.u[0], spr.v[1] },
-        .color_back = wall.colors.back,
-        .color_fore = wall.colors.fore,
+        .uv = .{ side.sprite.u[0], side.sprite.v[1] },
+        .color_back = side.colors.back,
+        .color_fore = side.colors.fore,
     };
 
     var x_min = std.math.inf(f32);
@@ -284,20 +285,20 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
     var y_max = -std.math.inf(f32);
 
     for (polygon.points) |point| {
-        vert_00.uv[0] = spr.u[0];
-        vert_01.uv[0] = spr.u[0];
+        vert_00.uv[0] = side.sprite.u[0];
+        vert_01.uv[0] = side.sprite.u[0];
 
         const vert_10 = Vertex{
             .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_max, 1 }),
-            .uv = .{ spr.u[1], spr.v[0] },
-            .color_back = wall.colors.back,
-            .color_fore = wall.colors.fore,
+            .uv = .{ side.sprite.u[1], side.sprite.v[0] },
+            .color_back = side.colors.back,
+            .color_fore = side.colors.fore,
         };
         const vert_11 = Vertex{
             .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_min, 1 }),
-            .uv = .{ spr.u[1], spr.v[1] },
-            .color_back = wall.colors.back,
-            .color_fore = wall.colors.fore,
+            .uv = .{ side.sprite.u[1], side.sprite.v[1] },
+            .color_back = side.colors.back,
+            .color_fore = side.colors.fore,
         };
 
         // Push verts
@@ -321,8 +322,8 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
 
     // Draw top
 
-    const diff_u = spr.u[1] - spr.u[0];
-    const diff_v = spr.v[1] - spr.v[0];
+    const diff_u = top.sprite.u[1] - top.sprite.u[0];
+    const diff_v = top.sprite.v[1] - top.sprite.v[0];
     const diff_x = x_max - x_min;
     const diff_y = y_max - y_min;
 
@@ -333,11 +334,11 @@ pub fn drawPolygon3D(polygon: *const collision.Polygon) void {
         const vert = Vertex{
             .pos = transformVector(mtx.Vec4{ point[0], point[1], polygon.z_max, 1 }),
             .uv = .{
-                spr.u[0] + (point[0] - x_min) / diff_x * diff_u,
-                spr.v[0] + (point[1] - y_min) / diff_y * diff_v,
+                top.sprite.u[0] + (point[0] - x_min) / diff_x * diff_u,
+                top.sprite.v[0] + (point[1] - y_min) / diff_y * diff_v,
             },
-            .color_back = wall.colors.back,
-            .color_fore = wall.colors.fore,
+            .color_back = top.colors.back,
+            .color_fore = top.colors.fore,
         };
 
         if (i == 0) {

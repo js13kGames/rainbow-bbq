@@ -74,7 +74,9 @@ export fn b() void {
         defer render.popMatrix();
 
         // Draw collision polygons
-        for (&world.world_shapes) |*wall| render.drawPolygon3D(wall);
+        for (&world.world_shapes, 0..) |*wall, i| {
+            render.drawPolygon3D(wall, &world.world_texture[i]);
+        }
 
         // Render entities
         for (&Entity.all) |*entity| entity.draw();

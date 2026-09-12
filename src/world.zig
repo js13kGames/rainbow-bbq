@@ -1,9 +1,11 @@
 const std = @import("std");
+const Sprite = @import("Sprite");
 
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
 const collision = @import("collision.zig");
 const Entity = @import("Entity.zig");
+const render = @import("render.zig");
 
 const world_builder = @import("build/world_builder.zig");
 const Opcode = world_builder.Opcode;
@@ -40,7 +42,7 @@ pub fn collisionDataNum(comptime data: []const u8) !struct { usize, usize } {
             },
 
             Opcode.entity => r.seek += 3,
-            Opcode.depth => r.seek += 1,
+            Opcode.depth, Opcode.texture => r.seek += 1,
 
             else => unreachable,
         }
@@ -49,9 +51,20 @@ pub fn collisionDataNum(comptime data: []const u8) !struct { usize, usize } {
     return .{ num_shapes, num_points };
 }
 
+pub const SpriteColor = struct {
+    sprite: *const Sprite,
+    colors: Sprite.Colors,
+};
+
+pub const ShapeTexture = struct {
+    top: SpriteColor,
+    side: SpriteColor,
+};
+
 const world_info = collisionDataNum(world_data) catch @panic("how");
-pub var world_shapes: [world_info[0]]collision.Polygon = undefined;
 var world_points: [world_info[1]]mtx.Vec2 = undefined;
+pub var world_shapes: [world_info[0]]collision.Polygon = undefined;
+pub var world_texture: [world_info[0]]ShapeTexture = undefined;
 
 const spawner_table = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
     Entity.Player.init,
@@ -59,9 +72,56 @@ const spawner_table = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
     Entity.Spawner.init,
 };
 
+fn darkenColor(color: u32) u32 {
+    var out: [4]u8 = @bitCast(color);
+    for (0..3) |i| {
+        var fcol: f32 = @floatFromInt(out[i]);
+        fcol *= 0.8;
+        out[i] = @trunc(fcol);
+    }
+
+    return @bitCast(out);
+}
+
+fn darkenColorPair(colors: Sprite.Colors) Sprite.Colors {
+    return .{
+        .fore = darkenColor(colors.fore),
+        .back = darkenColor(colors.back),
+    };
+}
+
+const texture_table = [_]ShapeTexture{
+    // Black void
+    .{
+        .top = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
+        .side = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
+    },
+    // stone + grass
+    .{
+        .top = .{ .sprite = Sprite.grass.spr, .colors = Sprite.grass.colors },
+        .side = .{ .sprite = Sprite.stone.spr, .colors = darkenColorPair(Sprite.stone.colors) },
+    },
+    // stone + stone
+    .{
+        .top = .{ .sprite = Sprite.stone.spr, .colors = Sprite.stone.colors },
+        .side = .{ .sprite = Sprite.stone.spr, .colors = darkenColorPair(Sprite.stone.colors) },
+    },
+    // pillar + grass
+    .{
+        .top = .{ .sprite = Sprite.grass.spr, .colors = Sprite.grass.colors },
+        .side = .{ .sprite = Sprite.pillar.spr, .colors = Sprite.pillar.colors },
+    },
+    // pillar + pillar
+    .{
+        .top = .{ .sprite = Sprite.pillar.spr, .colors = Sprite.pillar.colors },
+        .side = .{ .sprite = Sprite.pillar.spr, .colors = darkenColorPair(Sprite.pillar.colors) },
+    },
+};
+
 pub noinline fn init() void {
     var r = std.Io.Reader.fixed(world_data);
 
+    var texture_idx: usize = 0;
     var shape_idx: usize = 0;
     var point_idx: usize = 0;
     var z: u8 = 0;
@@ -70,8 +130,11 @@ pub noinline fn init() void {
         const opcode = r.takeByte() catch unreachable;
         switch (opcode) {
             Opcode.depth => {
-                const new_z = r.takeByte() catch unreachable;
-                z = new_z;
+                z = r.takeByte() catch unreachable;
+            },
+
+            Opcode.texture => {
+                texture_idx = r.takeByte() catch unreachable;
             },
 
             Opcode.shape => {
@@ -82,6 +145,7 @@ pub noinline fn init() void {
                     points[i] = readPos(&r);
                 }
 
+                world_texture[shape_idx] = texture_table[texture_idx];
                 world_shapes[shape_idx] = .{
                     .points = points,
                     .z_min = 0,
@@ -101,6 +165,7 @@ pub noinline fn init() void {
                 const points = world_points[point_idx .. point_idx + 16];
                 point_idx += 16;
 
+                world_texture[shape_idx] = texture_table[texture_idx];
                 world_shapes[shape_idx] = .initCircle(
                     .init(pos[0], pos[1], 0),
                     points,

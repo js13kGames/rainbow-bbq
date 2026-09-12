@@ -7,6 +7,7 @@ pub const Opcode = struct {
     pub const circle = 1;
     pub const entity = 2;
     pub const depth = 3;
+    pub const texture = 4;
 };
 
 pub const EntityID = struct {
@@ -46,6 +47,12 @@ pub fn main(init: std.process.Init) !void {
 
         // Emit depth opcode
         const depth = getLayerDepth(layer);
+        if (std.ascii.startsWithIgnoreCase(layer.name, "texture")) {
+            try w.writeByte(Opcode.texture);
+            try w.writeByte(depth);
+            continue;
+        }
+
         if (depth != prev_depth) {
             try w.writeByte(Opcode.depth);
             try w.writeByte(depth);
@@ -67,6 +74,8 @@ pub fn main(init: std.process.Init) !void {
             try renderCircleLayer(pixels, w);
         } else if (std.ascii.startsWithIgnoreCase(layer.name, "entity")) {
             try renderEntityLayer(pixels, w);
+        } else if (std.ascii.startsWithIgnoreCase(layer.name, "texture")) {
+            // Yup
         } else {
             std.debug.panic("unknown layer type '{s}'", .{layer.name});
         }
