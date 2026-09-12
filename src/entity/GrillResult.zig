@@ -34,7 +34,7 @@ pub fn update(entity: *Entity) void {
         this.prev_eaten = num_eaten;
 
         player.score_multiply *= 2;
-        player.score_multiply_timer = 660;
+        player.score_multiply_timer = 440;
     }
 
     if (this.prev_content != content.len) {
@@ -45,6 +45,7 @@ pub fn update(entity: *Entity) void {
 
     if (this.time >= 40 + interval_time * 6 + 60) {
         entity.flags.alive = false;
+        player.hp = @min(3, player.hp + 1);
     }
 }
 

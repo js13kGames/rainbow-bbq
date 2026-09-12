@@ -12,7 +12,7 @@ time: usize = 0,
 content: ?[6]Entity.EnemyKind = null,
 
 const radius: f32 = 30;
-const grill_time: usize = 60 * 10;
+const grill_time: usize = 60 * 6;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .grill = .{} };

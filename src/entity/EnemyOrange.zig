@@ -17,7 +17,7 @@ hidden_time: u32 = 0,
 const speed_accel: f32 = 0.002;
 const speed_max: f32 = 0.5;
 const hide_distance: f32 = 140;
-const max_hide_time: u32 = 60 * 5;
+const max_hide_time: u32 = 90;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
     entity.inner = .{ .enemy_orange = .{} };
@@ -49,7 +49,6 @@ pub fn update(entity: *Entity) void {
             this.wander_time = 0;
         }
     } else {
-        if (this.hidden_time != 0) this.hidden_time -= 1;
         if (this.wander_time == 0) {
             this.wander_time = (60 * 4) + js.irandom(60 * 4);
 
@@ -61,9 +60,13 @@ pub fn update(entity: *Entity) void {
         entity.moveTowards(this.wander_dir, speed_accel, speed_max, 0);
 
         // Hide if near the player
-        if (this.hidden_time == 0 and player_distance < hide_distance) {
-            this.hidden = true;
-            entity.flags.hurt_player = .always;
+        if (player_distance < hide_distance) {
+            if (this.hidden_time == 0) {
+                this.hidden = true;
+                entity.flags.hurt_player = .always;
+            }
+        } else {
+            this.hidden_time = 0;
         }
     }
 

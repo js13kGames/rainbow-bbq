@@ -21,7 +21,7 @@ state: State = .approach,
 
 const attack_time = 120;
 const stuck_time = 70;
-const attack_radius: f32 = 120;
+const attack_radius: f32 = 80;
 const attack_ring_thickness: f32 = 8;
 
 pub fn init(entity: *Entity, pos: mtx.Vector) void {
