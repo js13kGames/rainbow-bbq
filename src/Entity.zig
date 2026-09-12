@@ -8,6 +8,7 @@ pub const EnemyOrange = @import("entity/EnemyOrange.zig");
 pub const EnemyPurple = @import("entity/EnemyPurple.zig");
 pub const EnemyBlue = @import("entity/EnemyBlue.zig");
 
+pub const Spawner = @import("entity/Spawner.zig");
 pub const Particle = @import("entity/Particle.zig");
 pub const Hitbox = @import("entity/Hitbox.zig");
 pub const AttackPurple = @import("entity/AttackPurple.zig");
@@ -69,6 +70,7 @@ inner: union(enum) {
     enemy_purple: EnemyPurple,
     enemy_blue: EnemyBlue,
 
+    spawner: Spawner,
     particle: Particle,
     hitbox: Hitbox,
     attack_purple: AttackPurple,

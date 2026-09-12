@@ -5,7 +5,14 @@ const Ase = @import("Ase.zig");
 pub const Opcode = struct {
     pub const shape = 0;
     pub const circle = 1;
-    pub const depth = 2;
+    pub const entity = 2;
+    pub const depth = 3;
+};
+
+pub const EntityID = struct {
+    pub const player = 0;
+    pub const grill = 1;
+    pub const spawner = 2;
 };
 
 pub fn main(init: std.process.Init) !void {
@@ -51,10 +58,15 @@ pub fn main(init: std.process.Init) !void {
         ase.renderLayer(layer_id, 0, fb);
 
         // Ok, what kind of layer is this?
+        const pixels = try gatherPixels(fb, ase.header.width, gpa);
+        defer deinitGathered(pixels);
+
         if (std.ascii.startsWithIgnoreCase(layer.name, "shapes")) {
-            try renderShapeLayer(fb, ase.header.width, gpa, w);
+            try renderShapeLayer(pixels, w);
         } else if (std.ascii.startsWithIgnoreCase(layer.name, "circle")) {
-            try renderCircleLayer(fb, ase.header.width, gpa, w);
+            try renderCircleLayer(pixels, w);
+        } else if (std.ascii.startsWithIgnoreCase(layer.name, "entity")) {
+            try renderEntityLayer(pixels, w);
         } else {
             std.debug.panic("unknown layer type '{s}'", .{layer.name});
         }
@@ -133,10 +145,7 @@ fn getLayerDepth(layer: *const Ase.Layer) u8 {
     return depth;
 }
 
-fn renderShapeLayer(fb: []const [4]u8, width: usize, gpa: std.mem.Allocator, w: *std.Io.Writer) !void {
-    const pixel_map = try gatherPixels(fb, width, gpa);
-    defer deinitGathered(pixel_map);
-
+fn renderShapeLayer(pixel_map: *PixelHashMap, w: *std.Io.Writer) !void {
     var iter = pixel_map.iterator();
     while (iter.next()) |entry| {
         const points = entry.value_ptr.items;
@@ -151,10 +160,7 @@ fn renderShapeLayer(fb: []const [4]u8, width: usize, gpa: std.mem.Allocator, w: 
     }
 }
 
-pub fn renderCircleLayer(fb: []const [4]u8, width: usize, gpa: std.mem.Allocator, w: *std.Io.Writer) !void {
-    const pixel_map = try gatherPixels(fb, width, gpa);
-    defer deinitGathered(pixel_map);
-
+fn renderCircleLayer(pixel_map: *PixelHashMap, w: *std.Io.Writer) !void {
     // Ok, now build shape from those points
     var iter = pixel_map.iterator();
     while (iter.next()) |entry| {
@@ -167,6 +173,30 @@ pub fn renderCircleLayer(fb: []const [4]u8, width: usize, gpa: std.mem.Allocator
         try w.writeByte(@round(stats.middle[0]));
         try w.writeByte(@round(stats.middle[1]));
         try w.writeByte(@truncate(stats.width() / 2));
+    }
+}
+
+fn renderEntityLayer(pixel_map: *PixelHashMap, w: *std.Io.Writer) !void {
+    var iter = pixel_map.iterator();
+    while (iter.next()) |entry| {
+        const color = entry.key_ptr.*;
+        const color_u: u32 = @bitCast(color);
+        const list = entry.value_ptr.items;
+
+        const entity_id: u8 = switch (color_u) {
+            @bitCast([4]u8{ 255, 255, 255, 255 }) => EntityID.player,
+            @bitCast([4]u8{ 255, 0, 0, 255 }) => EntityID.grill,
+            @bitCast([4]u8{ 0, 0, 255, 255 }) => EntityID.spawner,
+
+            else => std.debug.panic("color {any} does not correspond to any entity!", .{color}),
+        };
+
+        for (list) |pos| {
+            try w.writeByte(Opcode.entity);
+            try w.writeByte(entity_id);
+            try w.writeByte(@truncate(pos[0]));
+            try w.writeByte(@truncate(pos[1]));
+        }
     }
 }
 

@@ -39,15 +39,6 @@ pub fn panic(msg: []const u8, stack_stace: ?*std.builtin.StackTrace, ret_addr: ?
     }
 }
 
-const enemy_initfn = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
-    Entity.EnemyRed.init,
-    Entity.EnemyOrange.init,
-    Entity.EnemyYellow.init,
-    Entity.EnemyGreen.init,
-    Entity.EnemyBlue.init,
-    Entity.EnemyPurple.init,
-};
-
 /// This is the "initial" function
 export fn a() void {
     // Ensure there is always a unit matrix at the bottom of the stack
@@ -60,26 +51,12 @@ export fn a() void {
     gbcompress.decompress(compressed, texture_data) catch unreachable;
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
-    world.init();
     restart();
 }
 
 pub fn restart() void {
     Entity.initAll();
-    Entity.Player.init(Entity.findFree().?, .init(0, 0, 1));
-    Entity.Grill.init(Entity.findFree().?, .init(0, 0, 1));
-
-    for (0..24) |_| {
-        const enemy_idx = js.irandom(enemy_initfn.len);
-        const pos = mtx.Vector.init(
-            js.frandom(1000) - 500,
-            js.frandom(1000) - 500,
-            0,
-        );
-
-        const entity = Entity.findFree().?;
-        enemy_initfn[enemy_idx](entity, pos);
-    }
+    world.init();
 }
 
 /// This is the main entrypoint

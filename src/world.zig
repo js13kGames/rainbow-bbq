@@ -3,6 +3,7 @@ const std = @import("std");
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
 const collision = @import("collision.zig");
+const Entity = @import("Entity.zig");
 
 const world_builder = @import("build/world_builder.zig");
 const Opcode = world_builder.Opcode;
@@ -38,6 +39,7 @@ pub fn collisionDataNum(comptime data: []const u8) !struct { usize, usize } {
                 num_shapes += 1;
             },
 
+            Opcode.entity => r.seek += 3,
             Opcode.depth => r.seek += 1,
 
             else => unreachable,
@@ -51,12 +53,17 @@ const world_info = collisionDataNum(world_data) catch @panic("how");
 pub var world_shapes: [world_info[0]]collision.Polygon = undefined;
 var world_points: [world_info[1]]mtx.Vec2 = undefined;
 
+const spawner_table = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
+    Entity.Player.init,
+    Entity.Grill.init,
+    Entity.Spawner.init,
+};
+
 pub noinline fn init() void {
     var r = std.Io.Reader.fixed(world_data);
 
     var shape_idx: usize = 0;
     var point_idx: usize = 0;
-
     var z: u8 = 0;
 
     while (r.seek != r.end) {
@@ -103,6 +110,14 @@ pub noinline fn init() void {
                 shape_idx += 1;
             },
 
+            Opcode.entity => {
+                const entity_id = r.takeByte() catch unreachable;
+                const pos = readPos(&r);
+
+                const entity = Entity.findFree().?;
+                spawner_table[entity_id](entity, .init(pos[0], pos[1], @as(f32, @floatFromInt(z)) + 0.01));
+            },
+
             else => unreachable,
         }
     }
@@ -116,9 +131,14 @@ pub noinline fn init() void {
     std.debug.assert(point_idx == world_points.len);
 }
 
+const img_width: f32 = 64;
+const level_size: f32 = 1500;
+const coord_scale: f32 = level_size / img_width;
+const coord_offset: f32 = level_size / 2.0;
+
 fn readPos(r: *std.Io.Reader) @Vector(2, f32) {
     return .{
-        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * 32 - 1024,
-        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * 32 - 1024,
+        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale - coord_scale,
+        @as(f32, @floatFromInt(r.takeByte() catch unreachable)) * coord_scale - coord_offset,
     };
 }
