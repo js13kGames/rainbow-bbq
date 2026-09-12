@@ -9,6 +9,7 @@ const gbcompress = @import("build/gbcompress.zig");
 const Entity = @import("Entity.zig");
 const collision = @import("collision.zig");
 const ui = @import("ui.zig");
+const world = @import("world.zig");
 
 pub const std_options = std.Options{
     .logFn = struct {
@@ -25,6 +26,18 @@ pub const std_options = std.Options{
         }
     }.inner,
 };
+
+pub fn panic(msg: []const u8, stack_stace: ?*std.builtin.StackTrace, ret_addr: ?usize) noreturn {
+    _ = stack_stace;
+    _ = ret_addr;
+    std.log.err("{s}", .{msg});
+
+    {
+        // Required here, to not trigger recursive panic calls, due to "unreachable code reached".
+        @setRuntimeSafety(false);
+        unreachable;
+    }
+}
 
 const enemy_initfn = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
     Entity.EnemyRed.init,
@@ -47,7 +60,7 @@ export fn a() void {
     gbcompress.decompress(compressed, texture_data) catch unreachable;
     js.uploadTexture(texture_data, Sprite.atlas_width, Sprite.atlas_height);
 
-    collision.initWorld();
+    world.init();
     restart();
 }
 
@@ -84,7 +97,7 @@ export fn b() void {
         defer render.popMatrix();
 
         // Draw collision polygons
-        for (&collision.world_walls) |*wall| render.drawPolygon3D(wall);
+        for (&world.world_shapes) |*wall| render.drawPolygon3D(wall);
 
         // Render entities
         for (&Entity.all) |*entity| entity.draw();

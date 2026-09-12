@@ -5,25 +5,41 @@ const named_dir: std.Build.InstallDir = .{ .custom = "named" };
 
 pub fn build(b: *std.Build) void {
     // First things first, build assets
-    const asset_builder = b.addExecutable(.{
-        .name = "asset_builder",
-        .root_module = b.addModule("asset_builder", .{
+    const texture_builder = b.addExecutable(.{
+        .name = "texture_builder",
+        .root_module = b.addModule("texture_builder", .{
             .root_source_file = b.path("src/build/texture_builder.zig"),
             .target = b.graph.host,
             // .optimize = .safe,
         }),
     });
 
+    // Ok, and now actually compile textures
     const texture_dir = b.path("assets/sprites");
+    const compile_textures_step = b.addRunArtifact(texture_builder);
+    compile_textures_step.has_side_effects = true;
+    compile_textures_step.addDirectoryArg(texture_dir);
+    const atlas_bin = compile_textures_step.addOutputFileArg("atlas.bin");
+    const sprite_zig = compile_textures_step.addOutputFileArg("Sprite.zig");
+    compile_textures_step.step.dependOn(watchDirectory(b, texture_dir));
 
-    // Ok, and now actually compile assets
-    const compile_assets_step = b.addRunArtifact(asset_builder);
-    compile_assets_step.has_side_effects = true;
-    compile_assets_step.addDirectoryArg(texture_dir);
-    const atlas_bin = compile_assets_step.addOutputFileArg("atlas.bin");
-    const sprite_zig = compile_assets_step.addOutputFileArg("Sprite.zig");
-    compile_assets_step.step.dependOn(watchDirectory(b, texture_dir));
+    const world_builder = b.addExecutable(.{
+        .name = "world_builder",
+        .root_module = b.addModule("world_builder", .{
+            .root_source_file = b.path("src/build/world_builder.zig"),
+            .target = b.graph.host,
+            // .optimize = .safe,
+        }),
+    });
 
+    const world_fname = b.path("assets/world.aseprite");
+    const compile_world_step = b.addRunArtifact(world_builder);
+    compile_world_step.has_side_effects = true;
+    compile_world_step.addFileArg(world_fname);
+    const world_bin = compile_world_step.addOutputFileArg("world.bin");
+    compile_world_step.step.dependOn(&b.addCheckFile(world_fname, .{}).step);
+
+    // Compile game module
     const target_wasm = b.resolveTargetQuery(.{
         .cpu_arch = .wasm32,
         .os_tag = .freestanding,
@@ -45,6 +61,7 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/main.zig"),
             .target = target_wasm,
             .optimize = optimize,
+            // .strip = false,
         }),
     });
     game_exe.rdynamic = true;
@@ -56,6 +73,9 @@ pub fn build(b: *std.Build) void {
     });
     game_exe.root_module.addAnonymousImport("atlas.bin", .{
         .root_source_file = atlas_bin,
+    });
+    game_exe.root_module.addAnonymousImport("world.bin", .{
+        .root_source_file = world_bin,
     });
 
     const install_step = b.getInstallStep();

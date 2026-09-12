@@ -8,6 +8,7 @@ const std = @import("std");
 
 const mtx = @import("mtx.zig");
 const js = @import("js.zig");
+const world = @import("world.zig");
 
 pub const gravity: f32 = 0.115;
 
@@ -48,6 +49,24 @@ pub const Polygon = struct {
 
         this.middle = .{ (xmin + xmax) / 2.0, (ymin + ymax) / 2.0 };
     }
+
+    pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) Polygon {
+        for (points, 0..) |*point, i| {
+            const angle = (std.math.tau / @as(f32, @floatFromInt(points.len))) * @as(f32, @floatFromInt(i));
+
+            point.* = .{
+                pos.v[0] + js.sin(angle) * radius,
+                pos.v[1] + js.cos(angle) * radius,
+            };
+        }
+
+        return .{
+            .z_min = pos.v[2],
+            .z_max = pos.v[2] + height,
+            .middle = .{ pos.v[0], pos.v[1] },
+            .points = points,
+        };
+    }
 };
 
 const PolygonProjection = struct {
@@ -68,23 +87,9 @@ pub const PhysicsEntity = struct {
     collided: bool = false,
 
     pub fn initCircle(pos: mtx.Vector, points: []mtx.Vec2, height: f32, radius: f32) PhysicsEntity {
-        for (points, 0..) |*point, i| {
-            const angle = (std.math.tau / @as(f32, @floatFromInt(points.len))) * @as(f32, @floatFromInt(i));
-
-            point.* = .{
-                pos.v[0] + js.sin(angle) * radius,
-                pos.v[1] + js.cos(angle) * radius,
-            };
-        }
-
         return .{
             .position = pos,
-            .shape = .{
-                .z_min = pos.v[2],
-                .z_max = pos.v[2] + height,
-                .middle = .{ pos.v[0], pos.v[1] },
-                .points = points,
-            },
+            .shape = .initCircle(pos, points, height, radius),
         };
     }
 
@@ -98,7 +103,11 @@ pub const PhysicsEntity = struct {
 
         // Eject self from walls
         this.collided = false;
+        var num_tries: usize = 0;
         while (collideWithWorld(&this.shape)) |eject| {
+            num_tries += 1;
+            if (num_tries > 10) break;
+
             this.collided = true;
             this.shape.move(.init(
                 eject.pen_dir[0] * (eject.pen_length + 0.001),
@@ -207,117 +216,8 @@ pub fn shapeOverlapSAT(a: *const Polygon, b: *const Polygon) ?CollisionResult {
     };
 }
 
-const PolyDescriptor = struct {
-    z_min: f32,
-    z_max: f32,
-    points: []const mtx.Vec2,
-};
-
-const polys = [_]PolyDescriptor{
-    .{
-        .z_min = 0,
-        .z_max = 24,
-        .points = &[_]mtx.Vec2{
-            .{ 20 * 5, 60 * 5 },
-            .{ 40 * 5, 80 * 5 },
-            .{ 65 * 5, 70 * 5 },
-            .{ 60 * 5, 50 * 5 },
-            .{ 50 * 5, 40 * 5 },
-            .{ 40 * 5, 40 * 5 },
-        },
-    },
-    .{
-        .z_min = 0,
-        .z_max = 24,
-        .points = &[_]mtx.Vec2{
-            .{ 75 * 5, 45 * 5 },
-            .{ 70 * 5, 30 * 5 },
-            .{ 60 * 5, 40 * 5 },
-        },
-    },
-
-    // Floor
-    .{
-        .z_min = -64,
-        .z_max = -0.001,
-        .points = &[_]mtx.Vec2{
-            .{ 512, -512 },
-            .{ -512, -512 },
-            .{ -512, 512 },
-            .{ 512, 512 },
-        },
-    },
-
-    // Surrounding walls
-    .{
-        .z_min = 0,
-        .z_max = 128,
-        .points = &[_]mtx.Vec2{
-            .{ 1024, 512 },
-            .{ 1024, -512 },
-            .{ 512, -512 },
-            .{ 512, 512 },
-        },
-    },
-    .{
-        .z_min = 0,
-        .z_max = 128,
-        .points = &[_]mtx.Vec2{
-            .{ -512, 512 },
-            .{ -512, -512 },
-            .{ -1024, -512 },
-            .{ -1024, 512 },
-        },
-    },
-    .{
-        .z_min = 0,
-        .z_max = 128,
-        .points = &[_]mtx.Vec2{
-            .{ 512, 512 },
-            .{ -512, 512 },
-            .{ -512, 1024 },
-            .{ 512, 1024 },
-        },
-    },
-    .{
-        .z_min = 0,
-        .z_max = 128,
-        .points = &[_]mtx.Vec2{
-            .{ 512, -1024 },
-            .{ -512, -1024 },
-            .{ -512, -512 },
-            .{ 512, -512 },
-        },
-    },
-};
-
-pub fn initWorld() void {
-    const num_points = comptime num_points: {
-        var num_points: usize = 0;
-        for (&polys) |*poly| {
-            num_points += poly.points.len;
-        }
-        break :num_points num_points;
-    };
-
-    const mem = js.staticAlloc(mtx.Vec2, num_points);
-    var p: usize = 0;
-    for (&polys, &world_walls) |poly, *wall| {
-        const points = mem[p .. p + poly.points.len];
-        p += poly.points.len;
-
-        @memcpy(points, poly.points);
-        wall.z_min = poly.z_min;
-        wall.z_max = poly.z_max;
-        wall.points = points;
-        wall.calculateMiddle();
-    }
-}
-
-pub var world_walls: [polys.len]Polygon = undefined;
-
 pub fn collideWithWorld(this: *Polygon) ?CollisionResult {
-    for (&world_walls) |*wall| {
+    for (&world.world_shapes) |*wall| {
         if (shapeOverlapSAT(wall, this)) |result| {
             return result;
         }

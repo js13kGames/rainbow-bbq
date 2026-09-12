@@ -26,6 +26,63 @@ pub fn pixelsPerFrame(this: *const Ase) usize {
     return cw * ch;
 }
 
+pub fn renderLayer(this: *const Ase, layer_index: usize, frame_idx: usize, buffer: [][4]u8) void {
+    std.debug.assert(frame_idx < this.frames.len);
+    std.debug.assert(buffer.len >= this.pixelsPerFrame());
+    const frame = &this.frames[frame_idx];
+
+    const cw = @as(usize, this.header.width);
+    const ch = @as(usize, this.header.height);
+    std.debug.assert(buffer.len == cw * ch);
+
+    @memset(buffer, .{ 0, 0, 0, 0 });
+
+    for (frame.cels) |cel| {
+        if (cel.header.layer != layer_index) continue;
+
+        const cel_x = @as(isize, @intCast(cel.header.x));
+        const cel_y = @as(isize, @intCast(cel.header.y));
+        const cel_w, const cel_h = switch (cel.extra_header) {
+            .raw => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
+            .compressed_img => |eh| .{ @as(usize, eh.width), @as(usize, eh.height) },
+            else => @panic("bad"),
+        };
+
+        for (0..cel_h) |y| {
+            const yi: isize = @bitCast(y);
+            if (yi + cel_y < 0) continue;
+            const dst_y: usize = @bitCast(cel_y + yi);
+            if (dst_y >= ch) continue;
+
+            for (0..cel_w) |x| {
+                const xi = @as(isize, @intCast(x));
+                if (xi + cel_x < 0) continue;
+                const dst_x: usize = @bitCast(cel_x + xi);
+                if (dst_x >= cw) continue;
+
+                const src_pixel = switch (this.header.color_depth) {
+                    .paletted => blk: {
+                        const i: usize = (y * cel_w) + x;
+                        const pix = cel.pixel_data[i];
+                        break :blk this.palette[pix];
+                    },
+
+                    .rgba => blk: {
+                        const i: usize = ((y * cel_w) + x) * 4;
+                        const color = cel.pixel_data[i .. i + 4][0..4].*;
+                        break :blk color;
+                    },
+
+                    else => @panic("unimplemented"),
+                };
+                if (src_pixel[3] == 0) continue;
+
+                buffer[dst_y * cw + dst_x] = src_pixel;
+            }
+        }
+    }
+}
+
 pub fn renderFrame(this: *const Ase, frame_idx: usize, buffer: [][4]u8) void {
     std.debug.assert(frame_idx < this.frames.len);
     std.debug.assert(buffer.len >= this.pixelsPerFrame());
