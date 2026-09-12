@@ -10,11 +10,33 @@ pub fn main(init: std.process.Init) !void {
 fn minify(fname_in: []const u8, fname_out: []const u8, io: std.Io, gpa: std.mem.Allocator) !void {
     const cwd = std.Io.Dir.cwd();
 
-    std.log.warn("in: {s}", .{fname_in});
-    std.log.warn("out: {s}", .{fname_out});
+    // FIRSTLY, run binaryen
+    const result = try std.process.run(gpa, io, .{
+        .argv = &.{
+            "wasm-opt",
+            "--enable-nontrapping-float-to-int",
+            "--enable-simd",
+            "--enable-bulk-memory",
+            "--enable-multivalue",
+            "--enable-sign-ext",
+            "-Oz",
+            "-o",
+            fname_out,
+            fname_in,
+        },
+    });
+
+    defer gpa.free(result.stdout);
+    defer gpa.free(result.stderr);
+
+    var in_file: []const u8 = fname_out;
+    if (!result.term.success()) {
+        std.log.warn("wasm-opt failed: {s}", .{result.stderr});
+        in_file = fname_in;
+    }
 
     // Read input file
-    const input_binary = try cwd.readFileAlloc(io, fname_in, gpa, .unlimited);
+    const input_binary = try cwd.readFileAlloc(io, in_file, gpa, .unlimited);
     defer gpa.free(input_binary);
 
     // Create output writer
