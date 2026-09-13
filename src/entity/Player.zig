@@ -80,6 +80,7 @@ pub fn update(entity: *Entity) void {
             // Ok, how do we handle this?
             if (this.charging and other.flags.hurt_player == .regular) {
                 other.flags.alive = false;
+                Entity.Spawner.num_enemies -= 1;
 
                 this.score += 10 * this.score_multiply;
                 this.score_gain = 15;
