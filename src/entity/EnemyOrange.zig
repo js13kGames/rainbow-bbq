@@ -66,7 +66,7 @@ pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.enemy_orange;
 
     const frame: usize = @intFromBool(this.hidden);
-    const siner = js.sin(@as(f32, @floatFromInt(this.wandering.wander_time)) / 20.0) / 7.0;
+    const siner = js.sin(@as(f32, @floatFromInt(this.hidden_time)) / 20.0) / 7.0;
 
     const xscale: f32 = if (this.hidden) 1 else 1 + siner;
     const angle: f32 = if (this.hidden) siner else 0;
