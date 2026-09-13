@@ -7,9 +7,8 @@ const mtx = @import("../mtx.zig");
 const js = @import("../js.zig");
 
 points: [8]mtx.Vec2 = undefined,
-wander_dir: f32 = 0,
+wandering: Entity.Wandering = .{},
 lit: bool = false,
-time: usize = 0,
 
 const speed_accel: f32 = 0.002;
 const speed_max: f32 = 0.5;
@@ -35,45 +34,36 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.enemy_blue;
 
-    const player_distance = entity.distanceTo(Entity.Player.player);
-    const player_direction = entity.directionTo(Entity.Player.player);
-
-    if (this.time == 0) {
-        this.time = (60 * 4) + js.irandom(60 * 4);
-        const dir = js.frandom(1);
-        this.wander_dir = player_direction + (dir * dir * std.math.tau * std.math.sign(dir - 0.5));
-    }
-    this.time -= 1;
-
     if (this.lit) {
         // Fuse particles
         spawnParticle(entity.body.position, 1);
+        this.wandering.wander_time -= 1;
 
         // When explosion starts, create hitbox
-        if (this.time == attack_time - 5) {
+        if (this.wandering.wander_time == attack_time - 5) {
             if (Entity.findFree()) |hitbox| {
                 Entity.Hitbox.init(hitbox, entity.body.position, attack_time - 5, attack_radius, 80);
             }
         }
 
         // Create explosion particles
-        if (this.time <= attack_time) {
+        if (this.wandering.wander_time <= attack_time) {
             for (0..15) |_| {
                 spawnParticle(entity.body.position, 10);
             }
         }
 
-        if (this.time == 0) {
+        if (this.wandering.wander_time == 0) {
             entity.flags.alive = false;
             return;
         }
     } else {
-        entity.moveTowards(this.wander_dir, speed_accel, speed_max, 0);
+        const is_near = entity.wander(&this.wandering);
 
         // Light fuse if near the player
-        if (player_distance < light_distance) {
+        if (is_near) {
             this.lit = true;
-            this.time = light_time;
+            this.wandering.wander_time = light_time;
             entity.body.speed = .zero;
         }
     }
@@ -86,13 +76,13 @@ pub fn draw(entity: *const Entity) void {
 
     var xscale: f32 = 1;
 
-    const flash = (this.time >> 2) & 1 == 0;
+    const flash = (this.wandering.wander_time >> 2) & 1 == 0;
 
     if (this.lit and flash) {
-        if (this.time <= 60) xscale = 1.2;
+        if (this.wandering.wander_time <= 60) xscale = 1.2;
 
         Entity.Hitbox.drawRing(
-            this.time,
+            this.wandering.wander_time,
             16,
             entity.body.position.add4(.init(0, 0, 1)),
             attack_radius,

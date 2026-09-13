@@ -1,5 +1,7 @@
 pub const Entity = @This();
 
+const std = @import("std");
+
 pub const Player = @import("entity/Player.zig");
 pub const EnemyRed = @import("entity/EnemyRed.zig");
 pub const EnemyYellow = @import("entity/EnemyYellow.zig");
@@ -132,4 +134,25 @@ pub fn moveTowards(this: *Entity, direction: f32, accel: f32, max_speed: f32, ju
         const speed_dir = this.body.speed.normalize2();
         this.body.speed = speed_dir.mulScalar2(max_speed);
     }
+}
+
+pub const Wandering = struct {
+    wander_time: usize = 0,
+    wander_dir: f32 = 0,
+};
+
+pub fn wander(entity: *Entity, this: *Wandering) bool {
+    const player_distance = entity.distanceTo(Entity.Player.player);
+    const player_direction = entity.directionTo(Entity.Player.player);
+
+    if (this.wander_time == 0) {
+        this.wander_time = (60 * 4) + js.irandom(60 * 4);
+
+        const dir = js.frandom(1);
+        this.wander_dir = player_direction + (dir * dir * std.math.tau * std.math.sign(dir - 0.5));
+    }
+    this.wander_time -= 1;
+
+    entity.moveTowards(this.wander_dir, 0.002, 0.5, 0);
+    return player_distance < 140;
 }
