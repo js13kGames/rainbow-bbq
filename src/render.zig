@@ -29,8 +29,8 @@ pub var camera: Camera = Camera{
 pub const QuadDescriptor = struct {
     size: mtx.Vec2,
     origin: mtx.Vec2 = .{ 0.5, 0.5 },
-    pos: mtx.Vec3 = .{ 0, 0, 0 },
-    rot: mtx.Vec3 = .{ 0, 0, 0 },
+    pos: mtx.Vec4 = .{ 0, 0, 0, 1 },
+    rot: mtx.Vec4 = .{ 0, 0, 0, 1 },
     color_back: u32 = buildColor(.{ 0, 255, 0, 255 }),
     color_fore: u32 = buildColor(.{ 255, 0, 0, 255 }),
 
@@ -147,12 +147,12 @@ pub inline fn drawSpriteBillboard(sprite: anytype, t: struct {
     origin: mtx.Vec2 = .{ 0.5, 0 },
 }) void {
     drawQuad(sprite.spr.frame(t.frame), .{
-        .pos = .{ t.pos.v[0], t.pos.v[1], t.pos.v[2] },
+        .pos = t.pos.v,
         .size = .{ @as(f32, sprite.w) * t.scale[0], @as(f32, sprite.h) * t.scale[1] },
         .color_back = sprite.frame_colors[t.frame].back,
         .color_fore = sprite.frame_colors[t.frame].fore,
         .origin = t.origin,
-        .rot = .{ 0, t.angle, camera.yaw_rad },
+        .rot = .{ 0, t.angle, camera.yaw_rad, 0 },
     });
 }
 
@@ -190,8 +190,8 @@ pub fn drawText(text: []const u8, t: TextDrawDescriptor) void {
             .color_back = t.colors.back,
             .color_fore = t.colors.fore,
             .origin = .{ 0, 1 },
-            .rot = .{ std.math.pi / 2.0, 0, 0 },
-            .pos = .{ bp.v[0], bp.v[1], bp.v[2] },
+            .rot = .{ std.math.pi / 2.0, 0, 0, 0 },
+            .pos = bp.v,
         });
     }
 }
@@ -219,8 +219,8 @@ fn drawNumberInner(pos: *mtx.Vector, number: usize, t: *const TextDrawDescriptor
         .color_back = t.colors.back,
         .color_fore = t.colors.fore,
         .origin = .{ 0, 1 },
-        .rot = .{ std.math.pi / 2.0, 0, 0 },
-        .pos = .{ pos.v[0], pos.v[1], pos.v[2] },
+        .rot = .{ std.math.pi / 2.0, 0, 0, 0 },
+        .pos = pos.v,
     });
 
     pos.v[0] += 8 * t.scale;

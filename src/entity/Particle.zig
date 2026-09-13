@@ -55,10 +55,10 @@ pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.particle;
 
     render.drawQuad(this.sprite, .{
-        .pos = .{ this.pos.v[0], this.pos.v[1], this.pos.v[2] },
+        .pos = this.pos.v,
         .size = .{ @as(f32, @floatFromInt(this.w)) * this.scale, @as(f32, @floatFromInt(this.h)) * this.scale },
         .color_back = this.colors.back,
         .color_fore = this.colors.fore,
-        .rot = .{ 0, this.angle, render.camera.yaw_rad },
+        .rot = .{ 0, this.angle, render.camera.yaw_rad, 0 },
     });
 }

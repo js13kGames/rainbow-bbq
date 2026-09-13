@@ -127,9 +127,9 @@ pub fn update(entity: *Entity) void {
             if (this.charge == 0) {
                 this.charging = false;
             } else {
-            spawnParticle(entity, 0.3);
-            speed_accel = speed_accel_charge;
-            speed_max = speed_max_charge;
+                spawnParticle(entity, 0.3);
+                speed_accel = speed_accel_charge;
+                speed_max = speed_max_charge;
             }
         } else {
             this.charge = @min(1, this.charge + 0.002);
@@ -177,8 +177,8 @@ pub fn draw(entity: *const Entity) void {
     if (!hurt_flash) {
         const sprite = Sprite.unicorn;
         render.drawQuad(sprite.spr.frame(frame), .fromAtlas(sprite, .{
-            .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] },
-            .rot = .{ 0, 0, render.camera.yaw_rad },
+            .pos = entity.body.position.v,
+            .rot = .{ 0, 0, render.camera.yaw_rad, 0 },
             .origin = .{ 0.5, 0 },
         }));
     }

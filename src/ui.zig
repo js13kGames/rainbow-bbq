@@ -71,10 +71,10 @@ fn drawGameplay(player: *const Entity.Player) void {
     render.drawQuad(Sprite.arrow.spr, .{
         .size = .{ 7, 55 * player.charge },
         .origin = .{ 0, 0 },
-        .pos = .{ 147, 132, 0 },
+        .pos = .{ 147, 132, 0, 0 },
         .color_back = 0xFFFF_FFFF,
         .color_fore = 0xFFFF_FFFF,
-        .rot = .{ std.math.pi / 2.0, 0, 0 },
+        .rot = .{ std.math.pi / 2.0, 0, 0, 0 },
     });
 }
 

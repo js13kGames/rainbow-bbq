@@ -150,8 +150,8 @@ pub fn draw(entity: *const Entity) void {
                 render.drawQuad(sprite.spr, .fromAtlas(sprite, .{
                     .size = .{ 50, attack_radius - attack_ring_thickness },
                     .origin = .{ 0.5, 0 },
-                    .pos = .{ entity.body.position.v[0], entity.body.position.v[1], entity.body.position.v[2] + 1 },
-                    .rot = .{ -std.math.pi / 2.0, 0, angle },
+                    .pos = entity.body.position.v,
+                    .rot = .{ -std.math.pi / 2.0, 0, angle, 0 },
                 }));
             }
         }

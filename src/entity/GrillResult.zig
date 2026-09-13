@@ -73,12 +73,12 @@ pub fn drawGUI(this: *const @This()) void {
         const scale = 1 + i_f + i_f * i_f * 0.3;
         const sprite = Sprite.rainbow;
         render.drawQuad(sprite.spr, .{
-            .pos = .{ draw_x, draw_y, 0 },
+            .pos = .{ draw_x, draw_y, 0, 0 },
             .size = .{ 32 * scale, 20 * scale },
             .color_back = 0,
             .color_fore = color,
             .origin = .{ 0.5, 0 },
-            .rot = .{ std.math.pi / 2.0, 0, 0 },
+            .rot = .{ std.math.pi / 2.0, 0, 0, 0 },
         });
     }
 

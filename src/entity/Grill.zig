@@ -143,8 +143,8 @@ pub fn drawSpear(pos: mtx.Vector, angle: [3]f32, content: []const Entity.EnemyKi
             .size = .{ 20, 20 },
             .color_back = t.color,
             .color_fore = render.buildColor(.{ 0, 0, 0, 255 }),
-            .pos = .{ mpos.v[0], mpos.v[1], mpos.v[2] },
-            .rot = .{ mr, mr, mr + content_angle },
+            .pos = mpos.v,
+            .rot = .{ mr, mr, mr + content_angle, 0 },
         };
         render.drawQuad(t.spr, desc);
 
