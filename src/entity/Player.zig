@@ -153,7 +153,7 @@ pub fn update(entity: *Entity) void {
     render.camera.position = entity.body.position.add4(
         mtx.Vector
             .init(0, -camera_distance_h, camera_distance_v)
-            .rotateX(render.camera.pitch_rad)
+            .rotateX(-0.4)
             .rotateZ(render.camera.yaw_rad),
     );
 }

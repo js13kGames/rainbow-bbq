@@ -20,7 +20,6 @@ pub fn buildColor(rgba: [4]u8) u32 {
 }
 
 pub var camera: Camera = Camera{
-    .pitch_rad = -0.4,
     .position = .{ .v = .{ 20, -20, 40, 0 } },
 };
 

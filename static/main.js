@@ -106,7 +106,7 @@
         c.requestPointerLock();
     };
 
-    onmousemove = (event) => document.pointerLockElement && instance.exports.m(event.movementX, event.movementY);
+    onmousemove = (event) => document.pointerLockElement && instance.exports.m(event.movementX);
 
     // Run once per frame
     instance.exports.a();

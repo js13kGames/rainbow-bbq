@@ -64,16 +64,14 @@ export fn k(key: usize, pressed: bool) void {
     input.keys[key].next = pressed;
 }
 
-export fn m(dx: f32, dy: f32) void {
+export fn m(dx: f32) void {
     input.mouse_nx += dx;
-    input.mouse_ny += dy;
 }
 
 pub const input = struct {
     pub var keys: [256]DigitalState = undefined;
 
     var mouse_nx: f32 = 0;
-    var mouse_ny: f32 = 0;
 
     pub const key_up = 38;
     pub const key_down = 40;
@@ -112,10 +110,6 @@ pub const input = struct {
     pub fn update() void {
         render.camera.yaw_rad -= mouse_nx / 300.0;
         mouse_nx = 0;
-
-        render.camera.pitch_rad -= mouse_ny / 300.0;
-        render.camera.pitch_rad = @min(@max(render.camera.pitch_rad, -std.math.pi / 2.01), std.math.pi / 2.01);
-        mouse_ny = 0;
 
         for (&keys, 0..) |key, i| {
             keys[i] = key.update();

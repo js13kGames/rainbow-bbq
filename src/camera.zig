@@ -27,12 +27,11 @@ pub const CameraOrtho = struct {
 
 pub const CameraPerspective = struct {
     position: Vector = .init(0, -2, 0),
-    pitch_rad: f32 = 0,
     yaw_rad: f32 = 0, // -(std.math.pi - 0.001),
 
     pub fn getLookDirectionVector(this: CameraPerspective) Vector {
         return Vector.init(0, 1, 0)
-            .rotateX(this.pitch_rad)
+            .rotateX(-0.4)
             .rotateZ(this.yaw_rad)
             .normalize3();
     }
