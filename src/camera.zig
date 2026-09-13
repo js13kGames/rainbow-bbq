@@ -30,10 +30,6 @@ pub const CameraPerspective = struct {
     pitch_rad: f32 = 0,
     yaw_rad: f32 = 0, // -(std.math.pi - 0.001),
 
-    fov_rad: f32 = 60.0 * (std.math.pi / 180.0),
-    z_near: f32 = 1,
-    z_far: f32 = 10000,
-
     pub fn getLookDirectionVector(this: CameraPerspective) Vector {
         return Vector.init(0, 1, 0)
             .rotateX(this.pitch_rad)
@@ -42,12 +38,7 @@ pub const CameraPerspective = struct {
     }
 
     pub fn getMatrix(this: CameraPerspective) Matrix {
-        const projection_matrix = Matrix.perspectiveWebGL(
-            this.fov_rad,
-            160.0 / 144.0,
-            this.z_near,
-            this.z_far,
-        );
+        const projection_matrix = comptime Matrix.perspective();
 
         const view_matrix = Matrix.lookAt(
             this.position,

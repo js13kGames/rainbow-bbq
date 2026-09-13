@@ -99,50 +99,21 @@ pub const Matrix = struct {
     }
 
     /// You get to decide the low bound of the clip space Z-dimension.
-    pub fn perspective(comptime ndc_z_low: i1, fov_y_rad: f32, aspect: f32, z_near: f32, z_far: f32) Matrix {
+    pub fn perspective() Matrix {
+        const fov_y_rad = 60.0 * (std.math.pi / 180.0);
+        const aspect = 160.0 / 144.0;
+
         var out: Matrix = .{};
-        const f: f32 = 1.0 / js.tan(fov_y_rad / 2);
+        const f: f32 = 1.0 / @tan(fov_y_rad / 2.0);
 
         out.m[0][0] = f / aspect;
         out.m[1][1] = f;
+        out.m[2][2] = -1;
         out.m[2][3] = -1;
+        out.m[3][2] = -2;
         out.m[3][3] = 0;
 
-        switch (ndc_z_low) {
-            0 => {
-                if (!std.math.isPositiveInf(z_far)) {
-                    const nf = 1 / (z_near - z_far);
-                    out.m[2][2] = z_far * nf;
-                    out.m[3][2] = z_far * z_near * nf;
-                } else {
-                    out.m[2][2] = -1;
-                    out.m[3][2] = -z_near;
-                }
-            },
-
-            -1 => {
-                if (!std.math.isPositiveInf(z_far)) {
-                    const nf = 1 / (z_near - z_far);
-                    out.m[2][2] = (z_far + z_near) * nf;
-                    out.m[3][2] = 2 * z_far * z_near * nf;
-                } else {
-                    out.m[2][2] = -1;
-                    out.m[3][2] = -2 * z_near;
-                }
-            },
-        }
-
         return out;
-    }
-
-    /// Clip space is [-1, 1] for X, Y and Z.
-    pub fn perspectiveWebGL(fov_y_rad: f32, aspect: f32, z_near: f32, z_far: f32) Matrix {
-        return perspective(-1, fov_y_rad, aspect, z_near, z_far);
-    }
-
-    /// Clip space is [-1, 1] for X and Y, but [0, 1] for Z.
-    pub fn perspectiveWebGPU(fov_y_rad: f32, aspect: f32, z_near: f32, z_far: f32) Matrix {
-        return perspective(0, fov_y_rad, aspect, z_near, z_far);
     }
 
     /// You get to decide the low bound of the clip space Z-dimension.

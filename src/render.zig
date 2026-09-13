@@ -20,8 +20,6 @@ pub fn buildColor(rgba: [4]u8) u32 {
 }
 
 pub var camera: Camera = Camera{
-    .z_near = 1,
-    .z_far = std.math.inf(f32),
     .pitch_rad = -0.4,
     .position = .{ .v = .{ 20, -20, 40, 0 } },
 };
