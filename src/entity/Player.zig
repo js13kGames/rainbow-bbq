@@ -81,13 +81,19 @@ pub fn update(entity: *Entity) void {
             if (this.charging and other.flags.hurt_player == .regular) {
                 other.flags.alive = false;
                 Entity.Spawner.num_enemies -= 1;
+                const kind = other.flags.enemy_kind.?;
 
                 this.score += 10 * this.score_multiply;
                 this.score_gain = 15;
 
                 if (this.num_speared < 6) {
-                    this.speared[this.num_speared] = other.flags.enemy_kind.?;
+                    this.speared[this.num_speared] = kind;
                     this.num_speared += 1;
+                }
+
+                const color = Entity.Grill.sprite_map.get(kind).color;
+                for (0..10) |_| {
+                    Entity.Particle.spawnEvaporate(other.body.position.add4(.init(0, 0, 10)), 1, color, 7);
                 }
             } else if (this.invuln_timer == 0) {
                 this.hp -= 1;
