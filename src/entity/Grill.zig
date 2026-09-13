@@ -113,7 +113,7 @@ pub fn drawSpear(pos: mtx.Vector, angle: [3]f32, content: []const Entity.EnemyKi
 
     var matrix = mtx.Matrix{};
     _ = matrix
-        .translate(pos.v[0], pos.v[1], pos.v[2])
+        .translate(pos.v)
         .rotateZ(angle[2])
         .rotateX(angle[0])
         .rotateY(angle[1]);

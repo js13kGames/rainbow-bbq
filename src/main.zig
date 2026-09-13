@@ -102,9 +102,9 @@ fn drawFence() void {
     for (0..4) |i| {
         var matrix = mtx.Matrix{};
         _ = matrix
-            .translate(w / 2.0, w / 2.0, 0)
+            .translate(.{ w / 2.0, w / 2.0, 0, 0 })
             .rotateZ(@as(f32, @floatFromInt(i)) * std.math.pi / 2.0)
-            .translate(-w / 2.1, w / 2.1, 0);
+            .translate(.{ -w / 2.1, w / 2.1, 0, 0 });
 
         render.pushMatrix(&matrix);
         defer render.popMatrix();

@@ -32,11 +32,11 @@ pub const Matrix = struct {
     }
 
     /// Translates a matrix in place
-    pub fn translate(this: *Matrix, x: f32, y: f32, z: f32) *Matrix {
+    pub fn translate(this: *Matrix, v: Vec4) *Matrix {
         this.m[3] =
-            this.m[0] * @as(Vec4, @splat(x)) +
-            this.m[1] * @as(Vec4, @splat(y)) +
-            this.m[2] * @as(Vec4, @splat(z)) +
+            this.m[0] * @as(Vec4, @splat(v[0])) +
+            this.m[1] * @as(Vec4, @splat(v[1])) +
+            this.m[2] * @as(Vec4, @splat(v[2])) +
             this.m[3];
 
         return this;
@@ -52,7 +52,7 @@ pub const Matrix = struct {
     }
 
     pub fn translateAndRotate(this: *Matrix, pos: Vec4, rot: Vec4) *Matrix {
-        return this.translate(pos[0], pos[1], pos[2])
+        return this.translate(pos)
             .rotateZ(rot[2])
             .rotateX(rot[0])
             .rotateY(rot[1]);

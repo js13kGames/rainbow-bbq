@@ -73,6 +73,6 @@ pub const Camera2D = struct {
         var mat = Matrix{};
         return mat
             .scale(2 / this.width, 2 / -this.height, 1)
-            .translate(-this.x, this.y, 0).*;
+            .translate(.{ -this.x, this.y, 0, 0 }).*;
     }
 };

@@ -108,7 +108,7 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
     var matrix = mtx.Matrix{};
     matrix
         .translateAndRotate(t.pos, t.rot)
-        .translate(-t.origin[0] * w, 0, -t.origin[1] * h)
+        .translate(.{ -t.origin[0] * w, 0, -t.origin[1] * h, 0 })
         .scale(w, 1, h)
         .multiply(currentMatrix(), &matrix);
 
@@ -119,7 +119,7 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
         const z = i >> 1;
 
         verts[i] = .{
-            .pos = (mtx.Vector{ .v = .{ @floatFromInt(x), 0, @floatFromInt(z), 1 } }).transform3(&matrix).v,
+            .pos = (mtx.Vector.init(@floatFromInt(x), 0, @floatFromInt(z))).transform3(&matrix).v,
             .uv = .{ spr.u[x], spr.v[1 - z] },
             .color_back = t.color_back,
             .color_fore = t.color_fore,
