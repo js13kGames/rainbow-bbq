@@ -111,16 +111,11 @@
     // Run once per frame
     instance.exports.a();
     const interval = setInterval(() => {
-        try {
-            gl.clearColor(0,0,0,1);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            instance.exports.b();
+        instance.exports.b();
 
-            gl.flush();
-        } catch (err) {
-            clearInterval(interval);
-            throw err;
-        }
+        gl.flush();
     }, 1000 / 60);
 })();
