@@ -112,7 +112,7 @@ fn spawnParticle(pos: mtx.Vector, speed: f32) void {
     ).rotateZ(particle_dir);
 
     Entity.Particle.init(particle, .{
-        .colors = Sprite.enemy_blue.colors,
+        .color = Sprite.enemy_blue.colors.back,
         .pos = unit.mulScalar4(10.0).add4(pos),
         .speed = unit.mulScalar4(speed),
         .speed_damp = .init(0.95, 0.9, 1),

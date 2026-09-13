@@ -73,7 +73,7 @@ fn spawnParticles(pos: mtx.Vector) void {
         const entity = Entity.findFree() orelse return;
 
         Entity.Particle.init(entity, .{
-            .colors = Sprite.enemy_purple.colors,
+            .color = Sprite.enemy_purple.colors.back,
             .pos = pos.add4(.init(0, 0, 12)),
             .w = 8,
             .time = 20 + js.irandom(10),

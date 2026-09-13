@@ -6,7 +6,7 @@ const render = @import("../render.zig");
 const mtx = @import("../mtx.zig");
 
 time: usize,
-colors: Sprite.Colors,
+color: u32,
 w: f32,
 
 pos: mtx.Vector,
@@ -50,8 +50,8 @@ pub fn draw(entity: *const Entity) void {
     render.drawQuad(Sprite.smoke.spr, .{
         .pos = this.pos.v,
         .size = .{ this.w * this.scale, this.w * this.scale },
-        .color_back = this.colors.back,
-        .color_fore = this.colors.fore,
+        .color_back = this.color,
+        .color_fore = render.buildColor(.{ 0, 0, 0, 255 }),
         .rot = .{ 0, 0, render.camera.yaw_rad, 0 },
     });
 }

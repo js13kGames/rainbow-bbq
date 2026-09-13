@@ -57,15 +57,6 @@ pub fn init(entity: *Entity, pos: mtx.Vector) void {
     player = entity;
 }
 
-const rainbow_colors = [_]Sprite.Colors{
-    Sprite.enemy_red.colors,
-    Sprite.enemy_orange.colors,
-    Sprite.enemy_yellow.colors,
-    Sprite.enemy_green.colors,
-    Sprite.enemy_blue.colors,
-    Sprite.enemy_purple.colors,
-};
-
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.player;
 
@@ -192,7 +183,7 @@ fn spawnParticle(entity: *Entity, speed: f32) void {
         .w = 4,
         .time = 30,
         .pos = entity.body.position,
-        .colors = rainbow_colors[this.particle_tick % 6],
+        .color = Entity.Grill.sprite_map.get(@enumFromInt(this.particle_tick % 6)).color,
         .speed = .init(
             js.frandom(speed * 2) - speed,
             js.frandom(speed * 2) - speed,
