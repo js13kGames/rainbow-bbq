@@ -112,13 +112,11 @@ fn spawnParticle(pos: mtx.Vector, speed: f32) void {
     ).rotateZ(particle_dir);
 
     Entity.Particle.init(particle, .{
-        .sprite = Sprite.smoke.spr,
         .colors = Sprite.enemy_blue.colors,
         .pos = unit.mulScalar4(10.0).add4(pos),
         .speed = unit.mulScalar4(speed),
         .speed_damp = .init(0.95, 0.9, 1),
         .w = 16,
-        .h = 16,
         .time = 120,
         .scale_delta = -0.01 - js.frandom(0.01),
     });

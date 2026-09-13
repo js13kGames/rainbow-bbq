@@ -6,18 +6,12 @@ const render = @import("../render.zig");
 const mtx = @import("../mtx.zig");
 
 time: usize,
-sprite: *const Sprite,
 colors: Sprite.Colors,
-w: usize,
-h: usize,
+w: f32,
 
 pos: mtx.Vector,
 speed: mtx.Vector = .zero,
-speed_delta: mtx.Vector = .zero,
 speed_damp: mtx.Vector = .init(1, 1, 1),
-
-angle: f32 = 0,
-angle_delta: f32 = 0,
 
 scale: f32 = 1,
 scale_delta: f32 = 0,
@@ -39,9 +33,8 @@ pub fn init(entity: *Entity, this: @This()) void {
 pub fn update(entity: *Entity) void {
     const this = &entity.inner.particle;
 
-    this.speed = this.speed.add4(this.speed_delta).mul4(this.speed_damp);
+    this.speed = this.speed.mul4(this.speed_damp);
     this.pos = this.pos.add4(this.speed);
-    this.angle += this.angle_delta;
     this.scale += this.scale_delta;
 
     if (this.time == 0 or this.scale <= 0) {
@@ -54,11 +47,11 @@ pub fn update(entity: *Entity) void {
 pub fn draw(entity: *const Entity) void {
     const this = &entity.inner.particle;
 
-    render.drawQuad(this.sprite, .{
+    render.drawQuad(Sprite.smoke.spr, .{
         .pos = this.pos.v,
-        .size = .{ @as(f32, @floatFromInt(this.w)) * this.scale, @as(f32, @floatFromInt(this.h)) * this.scale },
+        .size = .{ this.w * this.scale, this.w * this.scale },
         .color_back = this.colors.back,
         .color_fore = this.colors.fore,
-        .rot = .{ 0, this.angle, render.camera.yaw_rad, 0 },
+        .rot = .{ 0, 0, render.camera.yaw_rad, 0 },
     });
 }

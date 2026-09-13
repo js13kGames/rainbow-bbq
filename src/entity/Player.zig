@@ -190,9 +190,7 @@ fn spawnParticle(entity: *Entity, speed: f32) void {
     this.particle_tick += 1;
 
     Entity.Particle.init(particle, .{
-        .sprite = Sprite.smoke.spr,
         .w = 4,
-        .h = 4,
         .time = 30,
         .pos = entity.body.position,
         .colors = rainbow_colors[this.particle_tick % 6],
