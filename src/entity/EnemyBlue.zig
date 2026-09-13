@@ -36,7 +36,7 @@ pub fn update(entity: *Entity) void {
 
     if (this.lit) {
         // Fuse particles
-        spawnParticle(entity.body.position, 1);
+        Entity.Particle.spawnEvaporate(entity.body.position, 2, Sprite.enemy_blue.colors.back, 7);
         this.wandering.wander_time -= 1;
 
         // When explosion starts, create hitbox
@@ -49,7 +49,7 @@ pub fn update(entity: *Entity) void {
         // Create explosion particles
         if (this.wandering.wander_time <= attack_time) {
             for (0..15) |_| {
-                spawnParticle(entity.body.position, 10);
+                Entity.Particle.spawnEvaporate(entity.body.position, 10, Sprite.enemy_blue.colors.back, 16);
             }
         }
 
@@ -94,30 +94,5 @@ pub fn draw(entity: *const Entity) void {
     render.drawSpriteBillboard(Sprite.enemy_blue, .{
         .pos = entity.body.position,
         .scale = .{ xscale, xscale },
-    });
-}
-
-fn spawnParticle(pos: mtx.Vector, speed: f32) void {
-    // Spawn 7 billion particles
-    const particle = Entity.findFree() orelse return;
-
-    const particle_dir = js.frandom(std.math.tau);
-    const dist_rand = js.frandom(1);
-    const dist_norm = dist_rand * dist_rand * dist_rand;
-
-    const unit = mtx.Vector.init(
-        1.0 - dist_norm + js.frandom(0.3),
-        0,
-        dist_norm * 0.5 + js.frandom(0.3),
-    ).rotateZ(particle_dir);
-
-    Entity.Particle.init(particle, .{
-        .color = Sprite.enemy_blue.colors.back,
-        .pos = unit.mulScalar4(10.0).add4(pos),
-        .speed = unit.mulScalar4(speed),
-        .speed_damp = .init(0.95, 0.9, 1),
-        .w = 16,
-        .time = 120,
-        .scale_delta = -0.01 - js.frandom(0.01),
     });
 }
