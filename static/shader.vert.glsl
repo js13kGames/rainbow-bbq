@@ -1,25 +1,23 @@
 #version 300 es
 
-precision highp float;
-
 // Sprite position, aligned to top-left screen position
-layout(location = 0) in vec4 a_pos;
+layout(location = 0) in vec4 p;
 
 // Texture coordinates
-layout(location = 1) in vec2 a_uv;
+layout(location = 1) in vec2 v;
 
 // Sprite background color in RGBA
-layout(location = 2) in vec4 a_back;
+layout(location = 2) in vec4 b;
 
 // Sprite foreground color in RGBA
-layout(location = 3) in vec4 a_fore;
+layout(location = 3) in vec4 f;
 
-out vec2 v_uv;
-out vec4 v_color[2];
+out vec2 u;
+out vec4 c[2];
 
 void main() {
-    v_color[0] = a_back;
-    v_color[1] = a_fore;
-    v_uv = a_uv;
-    gl_Position = a_pos;
+    c[0] = b;
+    c[1] = f;
+    u = v;
+    gl_Position = p;
 }

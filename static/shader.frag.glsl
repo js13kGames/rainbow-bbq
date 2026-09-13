@@ -1,23 +1,22 @@
 #version 300 es
 
 precision highp float;
-precision highp int;
 uniform lowp usampler2D s;
 
-in vec2 v_uv;
-in vec4 v_color[2];
+in vec2 u;
+in vec4 c[2];
 
-out vec4 o_color;
+out vec4 o;
 
 void main() {
-    vec2 tex_size = vec2(textureSize(s, 0));
+    vec2 d = vec2(textureSize(s, 0));
 
-    uint byte = texture(s, v_uv).x;
-    uint bit_idx = uint(fract(v_uv.x * tex_size.x) * 8.);
+    uint y = texture(s, u).x;
+    uint i = uint(fract(u.x * d.x) * 8.);
 
-    uint bit = (byte >> bit_idx) & 1u;
-    vec4 color = v_color[bit];
+    uint b = (y >> i) & 1u;
+    vec4 l = c[b];
 
-    if (color.a == 0.0) discard;
-    o_color = color;
+    if (l.a == 0.) discard;
+    o = l;
 }
