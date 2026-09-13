@@ -64,7 +64,7 @@ pub const ShapeTexture = struct {
 const world_info = collisionDataNum(world_data) catch @panic("how");
 var world_points: [world_info[1]]mtx.Vec2 = undefined;
 pub var world_shapes: [world_info[0]]collision.Polygon = undefined;
-pub var world_texture: [world_info[0]]ShapeTexture = undefined;
+pub var world_texture: [world_info[0]]usize = undefined;
 
 const spawner_table = [_]*const fn (entity: *Entity, pos: mtx.Vector) void{
     Entity.Player.init,
@@ -90,7 +90,7 @@ fn darkenColorPair(colors: Sprite.Colors) Sprite.Colors {
     };
 }
 
-const texture_table = [_]ShapeTexture{
+pub const texture_table = [_]ShapeTexture{
     // Black void
     .{
         .top = .{ .sprite = Sprite.arrow.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
@@ -145,7 +145,7 @@ pub noinline fn init() void {
                     points[i] = readPos(&r);
                 }
 
-                world_texture[shape_idx] = texture_table[texture_idx];
+                world_texture[shape_idx] = texture_idx;
                 world_shapes[shape_idx] = .{
                     .points = points,
                     .z_min = 0,
@@ -165,7 +165,7 @@ pub noinline fn init() void {
                 const points = world_points[point_idx .. point_idx + 16];
                 point_idx += 16;
 
-                world_texture[shape_idx] = texture_table[texture_idx];
+                world_texture[shape_idx] = texture_idx;
                 world_shapes[shape_idx] = .initCircle(
                     .init(pos[0], pos[1], 0),
                     points,
@@ -189,8 +189,7 @@ pub noinline fn init() void {
 
     // Force first shape to extend further
     const first_shape = &world_shapes[0];
-    first_shape.z_min = -6000;
-    first_shape.z_max = -0.1;
+    first_shape.z_min = -63;
 
     std.debug.assert(shape_idx == world_shapes.len);
     std.debug.assert(point_idx == world_points.len);
