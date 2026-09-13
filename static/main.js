@@ -117,5 +117,5 @@
         instance.exports.b();
 
         gl.flush();
-    }, 1000 / 60);
+    }, 16);
 })();
