@@ -68,7 +68,7 @@ fn drawGameplay(player: *const Entity.Player) void {
     }
 
     // Draw charge bar
-    render.drawQuad(Sprite.white.spr, .{
+    render.drawQuad(Sprite.arrow.spr, .{
         .size = .{ 7, 55 * player.charge },
         .origin = .{ 0, 0 },
         .pos = .{ 147, 132, 0 },

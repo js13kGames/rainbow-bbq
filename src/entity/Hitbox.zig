@@ -56,7 +56,7 @@ pub fn drawRing(time: usize, num_points: usize, pos: mtx.Vector, radius: f32, ri
 }
 
 fn buildRingVert(angle: f32, distance: f32, pos: mtx.Vector, color: u32) render.Vertex {
-    const spr = Sprite.white.spr;
+    const spr = Sprite.arrow.spr;
     return .{
         .pos = render.transformVector(pos.add4((mtx.Vector{ .v = .{ distance, 0, 1, 0 } }).rotateZ(angle))),
         .uv = .{ spr.u[0], spr.v[0] },

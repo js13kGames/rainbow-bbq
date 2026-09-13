@@ -93,8 +93,8 @@ fn darkenColorPair(colors: Sprite.Colors) Sprite.Colors {
 const texture_table = [_]ShapeTexture{
     // Black void
     .{
-        .top = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
-        .side = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
+        .top = .{ .sprite = Sprite.arrow.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
+        .side = .{ .sprite = Sprite.arrow.spr, .colors = .{ .fore = render.buildColor(.{ 0, 0, 0, 255 }), .back = render.buildColor(.{ 0, 0, 0, 255 }) } },
     },
     // stone + grass
     .{
@@ -113,8 +113,8 @@ const texture_table = [_]ShapeTexture{
     },
     // Invisible
     .{
-        .top = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = 0, .back = 0 } },
-        .side = .{ .sprite = Sprite.white.spr, .colors = .{ .fore = 0, .back = 0 } },
+        .top = .{ .sprite = Sprite.arrow.spr, .colors = .{ .fore = 0, .back = 0 } },
+        .side = .{ .sprite = Sprite.arrow.spr, .colors = .{ .fore = 0, .back = 0 } },
     },
 };
 
