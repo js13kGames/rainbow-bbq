@@ -69,20 +69,10 @@ pub fn update(entity: *Entity) void {
 }
 
 fn spawnParticles(pos: mtx.Vector) void {
+    var vec = pos;
+    vec.v[2] += 12;
     for (0..10) |_| {
-        const entity = Entity.findFree() orelse return;
-
-        Entity.Particle.init(entity, .{
-            .color = Sprite.enemy_purple.colors.back,
-            .pos = pos.add4(.init(0, 0, 12)),
-            .w = 8,
-            .time = 20 + js.irandom(10),
-            .speed = .init(
-                js.frandom(2) - 1,
-                js.frandom(2) - 1,
-                js.frandom(2) - 1,
-            ),
-        });
+        Entity.Particle.spawnEvaporate(vec, 1, Sprite.enemy_purple.colors.back, 8);
     }
 }
 

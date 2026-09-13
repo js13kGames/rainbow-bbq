@@ -176,18 +176,8 @@ pub fn draw(entity: *const Entity) void {
 
 fn spawnParticle(entity: *Entity, speed: f32) void {
     const this = &entity.inner.player;
-    const particle = Entity.findFree() orelse return;
     this.particle_tick += 1;
 
-    Entity.Particle.init(particle, .{
-        .w = 4,
-        .time = 30,
-        .pos = entity.body.position,
-        .color = Entity.Grill.sprite_map.get(@enumFromInt(this.particle_tick % 6)).color,
-        .speed = .init(
-            js.frandom(speed * 2) - speed,
-            js.frandom(speed * 2) - speed,
-            js.frandom(speed * 2) - speed,
-        ),
-    });
+    const color = Entity.Grill.sprite_map.get(@enumFromInt(this.particle_tick % 6)).color;
+    Entity.Particle.spawnEvaporate(entity.body.position, speed, color, 4);
 }

@@ -4,6 +4,7 @@ const Sprite = @import("Sprite");
 const Entity = @import("../Entity.zig");
 const render = @import("../render.zig");
 const mtx = @import("../mtx.zig");
+const js = @import("../js.zig");
 
 time: usize,
 color: u32,
@@ -53,5 +54,21 @@ pub fn draw(entity: *const Entity) void {
         .color_back = this.color,
         .color_fore = render.buildColor(.{ 0, 0, 0, 255 }),
         .rot = .{ 0, 0, render.camera.yaw_rad, 0 },
+    });
+}
+
+pub fn spawnEvaporate(pos: mtx.Vector, speed: f32, color: u32, w: f32) void {
+    const particle = Entity.findFree() orelse return;
+
+    Entity.Particle.init(particle, .{
+        .w = w,
+        .time = js.irandom(25) + 5,
+        .pos = pos,
+        .color = color,
+        .speed = .init(
+            js.frandom(speed * 2) - speed,
+            js.frandom(speed * 2) - speed,
+            js.frandom(speed * 2) - speed,
+        ),
     });
 }
