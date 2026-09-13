@@ -51,6 +51,13 @@ pub const Matrix = struct {
         return this;
     }
 
+    pub fn translateAndRotate(this: *Matrix, pos: Vec4, rot: Vec4) *Matrix {
+        return this.translate(pos[0], pos[1], pos[2])
+            .rotateZ(rot[2])
+            .rotateX(rot[0])
+            .rotateY(rot[1]);
+    }
+
     /// Create a new matrix from a translation
     pub fn fromTranslation(x: f32, y: f32, z: f32) Matrix {
         return .{ .m = .{

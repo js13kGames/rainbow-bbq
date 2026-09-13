@@ -107,10 +107,7 @@ pub fn drawQuad(spr: *const Sprite, t: QuadDescriptor) void {
 
     var matrix = mtx.Matrix{};
     matrix
-        .translate(t.pos[0], t.pos[1], t.pos[2])
-        .rotateZ(t.rot[2])
-        .rotateX(t.rot[0])
-        .rotateY(t.rot[1])
+        .translateAndRotate(t.pos, t.rot)
         .translate(-t.origin[0] * w, 0, -t.origin[1] * h)
         .scale(w, 1, h)
         .multiply(currentMatrix(), &matrix);

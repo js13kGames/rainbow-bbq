@@ -9,7 +9,7 @@ const Entity = @import("Entity.zig");
 
 var gameover_time: usize = 0;
 
-pub fn run() void {
+pub noinline fn run() void {
     const player = &Entity.Player.player.inner.player;
 
     // Create 2D camera matrix

@@ -137,7 +137,7 @@ pub fn update(entity: *Entity) void {
 
         // Prepare movement
         entity.moveTowards(render.camera.yaw_rad + std.math.pi / 2.0, speed_accel, speed_max, 0);
-        if (js.input.keys[' '].isHeld() and entity.body.speed.v[2] <= 0 and collision.isOnFloor(&entity.body.shape)) {
+        if (js.input.keys[' '].isHeld() and collision.isOnFloor(&entity.body.shape)) {
             entity.body.speed.v[2] = 3;
             this.anim = 0;
         }
@@ -156,7 +156,6 @@ pub fn update(entity: *Entity) void {
             .rotateX(render.camera.pitch_rad)
             .rotateZ(render.camera.yaw_rad),
     );
-    render.camera.position.v[3] = 1;
 }
 
 pub fn draw(entity: *const Entity) void {
@@ -164,7 +163,7 @@ pub fn draw(entity: *const Entity) void {
     if (this.dead) return;
 
     var frame: usize = 0;
-    if (this.charging) frame = 2;
+    if (this.charging) frame += 2;
 
     // Use air sprite?
     if (!entity.body.isGrounded() or @as(usize, @trunc(this.anim / 12.0)) & 1 != 0) {
