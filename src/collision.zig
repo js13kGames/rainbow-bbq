@@ -94,9 +94,6 @@ pub const PhysicsEntity = struct {
     }
 
     pub fn moveAndCollide(this: *PhysicsEntity) void {
-        // Apply gravity
-        this.speed.v[2] -= gravity;
-
         // First update position X/Y
         this.position = this.position.add2(this.speed);
         this.shape.move(this.speed.to2());
@@ -127,6 +124,8 @@ pub const PhysicsEntity = struct {
         this.position.v[1] = this.shape.middle[1];
 
         // Cool, now do Z
+        // Apply gravity
+        this.speed.v[2] -= gravity;
         this.position.v[2] += this.speed.v[2];
         this.shape.move(.init(0, 0, this.speed.v[2]));
         while (collideWithWorld(&this.shape)) |eject| {
