@@ -2,6 +2,8 @@
 
 My entry for the JS13K 2026 gamejam.
 
+> **Please note:** This repository only contains source code up to- and including the version of the game submitted to JS13K. The "directors cut" version, as well as any future development, takes place on [Codeberg](https://codeberg.org/sukus/js13k-2026). The GitHub repository will not receive any more code updates.
+
 You play as a unicorn, dashing into enemies of different colors of the rainbow, and use your unicorn horn as a grill spear to cook them and gain a higher score.
 
 My goals for this project were to have as few dependencies as possible, and re-invent the wheel whenever possible. The game itself can be compiled and played in debug mode with zero additional dependencies required, but additional optimization passes make use of [Binaryen](https://github.com/webassembly/binaryen), and zipping for release uses [Info-ZIP](https://infozip.sourceforge.net).
