@@ -1,5 +1,7 @@
 # Rainbow BBQ
 
+![](./.website/thumbnail.png)
+
 My entry for the JS13K 2026 gamejam.
 
 > **Please note:** This repository only contains source code up to- and including the version of the game submitted to JS13K. The "directors cut" version, as well as any future development, takes place on [Codeberg](https://codeberg.org/sukus/js13k-2026). The GitHub repository will not receive any more code updates.
